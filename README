@@ -1,0 +1,27 @@
+==========================
+            _
+  __ _  ___| |_ ___  _ __
+ / _` |/ __| __/ _ \| '__|
+| (_| | (__| || (_) | |
+ \__,_|\___|\__\___/|_|
+
+==========================
+
+Interpreter.
+
+Build
+-----
+Run:
+	make
+
+Installation
+------------
+Enter the following command to install actor (if necessary as root):
+	make install
+
+Usage
+-----
+To run the script with actor enter the following:
+	actor scriptname.act
+
+
