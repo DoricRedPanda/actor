@@ -2,6 +2,13 @@
 #define LEXEM_H
 
 enum LexemType {
+	LEX_NULL,
+	BEGIN,
+	END,
+	LPARENTHESIS, RPARENTHESIS,
+	LBRACKET, RBRACKET,
+	EQUALSIGN,
+	DATA_TYPE,
 	CONST_INT,
 	STATEMENT,
 	IDENTIFIER,
@@ -10,8 +17,11 @@ enum LexemType {
 	COMMA
 };
 
+enum DataType {
+	INT
+};
+
 enum OpType {
-	LBRACKET, RBRACKET,
 	UPLUS, UMINUS,
 	OR,
 	AND,
@@ -22,33 +32,30 @@ enum OpType {
 	LEQ, LT, GEQ, GT,
 	SHL, SHR,
 	ADD, SUB,
-	MUL, DIV, MOD,
-	NOT_OPERATOR
+	MUL, DIV, MOD
 };
 
 enum StatementType {
-	BEGIN,
-	END,
-	ASSIGN,
-	TYPE_INT,
 	GOTO,
 	IF,
 	ELSE,
 	WHILE,
 	READ,
-	WRITE,
-	TRUE,
-	FALSE
+	WRITE
 };
 
 class Lexem {
 	const LexemType type;
 	union Value {
 		const OpType optype;
+		const DataType dtype;
+		const StatementType stype;
 		const int v_int;
 		const char *id;
 		Value() {}
 		Value(OpType op) : optype(op) {}
+		Value(DataType dtype) : dtype(dtype) {}
+		Value(StatementType stype) : stype(stype) {}
 		Value(int i) : v_int(i) {}
 		Value(const char *id) : id(id) {}
 	} value;
@@ -77,6 +84,8 @@ public:
 		: type(CONST_INT), value(num) {}
 	Lexem(StatementType stype)
 		: type(STATEMENT), value(stype) {}
+	Lexem(DataType dtype)
+		: type(DATA_TYPE), value(dtype) {}
 	~Lexem()
 	{
 		if (type == IDENTIFIER)

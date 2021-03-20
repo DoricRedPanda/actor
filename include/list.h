@@ -37,9 +37,11 @@ public:
 
 	void setPos(LNode<T> *ptr) { cur = ptr; }
 
-	T next()
+	T* next()
 	{
-		T res = cur->item;
+		if (!cur)
+			return NULL;
+		T *res = &(cur->item);
 		cur = cur->next;
 		return res;
 	}

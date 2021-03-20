@@ -4,11 +4,15 @@
 #include <string.h>
 #include "lexer.h"
 
-static const char delimiters[] = " \f\n\r\t\v,;()";
+static const char delimiters[] = " \f\n\r\t\v,;()[]{}";
+
+static const char *dataType[] {
+	"int",
+	NULL
+};
 
 static const char *opname[] {
-	"(", ")",
-	"", "", //fake
+	"", "", /* empty names to match enum */
 	"||",
 	"&&",
 	"|",
@@ -23,18 +27,12 @@ static const char *opname[] {
 };
 
 static const char *statement[] = {
-	"{",
-	"}",
-	":=",
-	"int",
 	"goto",
 	"if",
 	"else",
 	"while",
 	"read",
 	"write",
-	"true",
-	"false",
 	NULL
 };
 
@@ -140,25 +138,25 @@ word(List<Lexem> &list)
 	unget();
 	end();
 	type = look(statement);
-	if (type < 0)
-		list.insert(Lexem(buf));
+	if (type < 0) {
+		type = look(dataType);
+		if (type < 0)
+			list.insert(Lexem(buf));
+		else
+			list.insert((DataType) type);
+		return;
+	}
 	list.insert(Lexem((StatementType) type));
 }
 
 void Lexer::
-bracket(List<Lexem> &list)
+equalsign(List<Lexem> &list)
 {
-	StatementType type = ch == '{' ? BEGIN : END;
-	list.insert(Lexem(type));
-}
-
-void Lexer::
-assign(List<Lexem> &list)
-{
+	list.insert(Lexem(EQUALSIGN));
 	get();
-	if (ch != '=')
+	if (!isspace(ch))
 		errx(EXIT_FAILURE, "BAD LEXEM");
-	list.insert(Lexem(ASSIGN));
+	unget();
 }
 
 void Lexer::
@@ -189,11 +187,23 @@ delimiter(List<Lexem> &list)
 	case ',':
 		list.insert(Lexem(COMMA));
 		break;
-	case '(':
+	case '{':
+		list.insert(Lexem(BEGIN));
+		break;
+	case '}':
+		list.insert(Lexem(END));
+		break;
+	case '[':
 		list.insert(Lexem(LBRACKET));
 		break;
-	case ')':
+	case ']':
 		list.insert(Lexem(RBRACKET));
+		break;
+	case '(':
+		list.insert(Lexem(LPARENTHESIS));
+		break;
+	case ')':
+		list.insert(Lexem(RPARENTHESIS));
 		break;
 	case ';':
 		list.insert(Lexem(SEMICOLON));
@@ -221,16 +231,15 @@ run()
 			sign(list);
 		else if (isalpha(ch))
 			word(list);
-		else if (ch == '{' || ch == '}')
-			bracket(list);
-		else if (ch == ':')
-			assign(list);
+		else if (ch == '=')
+			equalsign(list);
 		else if (ispunct(ch))
 			operation(list);
 		else
 			errx(EXIT_FAILURE, "BAD LEXEM");
 		clear();
 	}
+	list.insert(LEX_NULL);
 	return list;
 }
 

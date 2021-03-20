@@ -27,8 +27,7 @@ class Lexer {
 	void word(List<Lexem> &l);
 	void sign(List<Lexem> &l);
 	void ident(List<Lexem> &l);
-	void bracket(List<Lexem> &l);
-	void assign(List<Lexem> &l);
+	void equalsign(List<Lexem> &l);
 	void operation(List<Lexem> &l);
 public:
 	Lexer(FILE *file)

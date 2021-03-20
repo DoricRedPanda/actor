@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include "lexer.h"
+#include "parser.h"
 
 FILE*
 init(int argc, char *argv[])
@@ -22,8 +24,9 @@ main(int argc, char *argv[])
 	FILE *file;
 	file = init(argc, argv);
 	Lexer lexer(file);
-	List<Lexem> l = lexer.run();
-	//Parser parser(lexer.run());
+	List<Lexem> list = lexer.run();
+	Parser parser(list);
+	parser.analyze();
 	/*
 	Interpreter interpreter(parser.run());
 	interpreter.run();
