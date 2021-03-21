@@ -93,6 +93,7 @@ public:
 	}
 	LexemType getType() const { return type; }
 	const char *getIdentifier() const { return value.id; }
+	DataType getDataType() const { return value.dtype; }
 };
 
 #endif

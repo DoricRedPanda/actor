@@ -2,53 +2,108 @@
 #include <stdlib.h>
 #include "parser.h"
 
+void Parser::
+get()
+{
+	lexem = list.next();
+	lextype =  lexem->getType();
+	if (lextype == IDENTIFIER)
+		idname = lexem->getIdentifier();
+	else if (lextype == DATA_TYPE)
+		dtype = lexem->getDataType();
+}
+
+void Parser::
+declare()
+{
+	int res;
+	Identifier ident(dtype);
+	res = symbolTable.insert(idname, ident);
+	if (res < 0)
+		errx(EXIT_FAILURE, "Identifier is already declared!");
+}
+
+void Parser::
+checkId()
+{
+	Identifier *identifier = symbolTable.find(idname);
+	if (identifier)
+		typeStack.push(identifier->type);
+	else
+		errx(EXIT_FAILURE, "Not declared!");
+}
+
+void Parser::
+checkAssign()
+{
+	if (typeStack.pop() != typeStack.pop())
+		errx(EXIT_FAILURE, "Assigning wrong type!");
+}
+
+void Parser::
+checkBinOp() //TODO redesign
+{
+	DataType foo, bar;
+	bar = typeStack.pop();
+	foo = typeStack.pop();
+	if (foo == bar)
+		typeStack.push(foo);
+	else
+		errx(EXIT_FAILURE, "Wrong type!");
+}
 
 void Parser::
 gvar()
 {
 	for (;;) {
-		if (lexem->getType() == COMMA) {
-			//INSERT
+		if (lextype == COMMA) {
+			declare();
 			get();
-			if (lexem->getType() != IDENTIFIER)
+			if (lextype != IDENTIFIER)
 				errx(EXIT_FAILURE, "Identifier expected!");
 			get();
 			continue;
 		}
-		if (lexem->getType() == SEMICOLON)
+		if (lextype == SEMICOLON)
 			break;
 		errx(EXIT_FAILURE, "gvar ';' expected!");
 	}
-	//INSERT
+	declare();
 }
 
 void Parser::
 var()
 {
-	//TODO Syntax for local variables
+	//TODO Syntax analysis for local variables
 }
 
 void Parser::
 expression()
 {
+	bool isFirst = true;
 	for (;;) {
 		get();
-		if (lexem->getType() == CONST_INT) {
-		} else if (lexem->getType() == IDENTIFIER) {
+		if (lextype == CONST_INT) {
+			typeStack.push(INT);
+		} else if (lextype == IDENTIFIER) {
 			//TODO function call
-		} else if (lexem->getType() == LPARENTHESIS) {
+			checkId();
+		} else if (lextype == LPARENTHESIS) {
 			expression();
-			if (lexem->getType() != RPARENTHESIS)
+			if (lextype != RPARENTHESIS)
 				errx(EXIT_FAILURE, "')' expected!");
-		} else if (lexem->getType() == OPERATOR) {
+		} else if (lextype == OPERATOR) {
 			//UNARY!
 			continue;
 		} else {
 			errx(EXIT_FAILURE, "BAD EXPRESSION!");
 		}
+		if (!isFirst)
+			checkBinOp();
 		get();
-		if (lexem->getType() != OPERATOR)
+		if (lextype != OPERATOR)
 			break;
+		isFirst = false;
 	}
 }
 
@@ -62,18 +117,20 @@ void Parser::
 statement()
 {
 	get();
-	if (lexem->getType() == SEMICOLON)
+	if (lextype == SEMICOLON)
 		return;
-	if (lexem->getType() == IDENTIFIER) {
+	if (lextype == IDENTIFIER) {
 		get();
-		if (lexem->getType() != EQUALSIGN)
+		if (lextype != EQUALSIGN)
 			errx(EXIT_FAILURE, "'=' expected!");
+		checkId();
 		expression();
-		if (lexem->getType() != SEMICOLON)
+		checkAssign();
+		if (lextype != SEMICOLON)
 			errx(EXIT_FAILURE, "';' expected!");
-	} else if (lexem->getType() == STATEMENT) {
+	} else if (lextype == STATEMENT) {
 		keyword();
-	} else if (lexem->getType() == BEGIN) {
+	} else if (lextype == BEGIN) {
 		body();
 	}
 
@@ -84,7 +141,7 @@ body()
 {
 	for (;;) {
 		statement();
-		if (lexem->getType() == END)
+		if (lextype == END)
 			break;
 	}
 }
@@ -93,10 +150,10 @@ void Parser::
 function()
 {
 	get();
-	if (lexem->getType() != RPARENTHESIS)
+	if (lextype != RPARENTHESIS)
 		errx(EXIT_FAILURE, "')' expected!");
 	get();
-	if (lexem->getType() == BEGIN)
+	if (lextype == BEGIN)
 		body();
 	else
 		errx(EXIT_FAILURE, "'{' expected!");
@@ -105,7 +162,7 @@ function()
 void Parser::
 dataType()
 {
-	if (lexem->getType() != DATA_TYPE)
+	if (lextype != DATA_TYPE)
 		errx(EXIT_FAILURE, "Data type expected!");
 }
 
@@ -114,14 +171,14 @@ analyze()
 {
 	for (;;) {
 		get();
-		if (lexem->getType() == LEX_NULL)
+		if (lextype == LEX_NULL)
 			break;
 		dataType();
 		get();
-		if (lexem->getType() != IDENTIFIER)
+		if (lextype != IDENTIFIER)
 			errx(EXIT_FAILURE, "Identifier expected!");
 		get();
-		if (lexem->getType() == LPARENTHESIS)
+		if (lextype == LPARENTHESIS)
 			function();
 		else
 			gvar();
