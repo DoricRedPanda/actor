@@ -165,7 +165,7 @@ operation(LexemList *list)
 		get();
 		if (ispunct(ch))
 			continue;
-		if (!strchr(delimiters, ch))
+		if (strchr(delimiters, ch))
 			break;
 		errx(EXIT_FAILURE, "BAD LEXEM");
 	}
