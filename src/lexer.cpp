@@ -4,15 +4,14 @@
 #include <string.h>
 #include "lexer.h"
 
-static const char delimiters[] = " \f\n\r\t\v,;()[]{}";
+static const char delimiters[] = " \f\n\r\t\v,;()[]{}*";
 
-static const char *dataType[] {
+static const char *dataType[] = {
 	"int",
 	NULL
 };
 
-static const char *opname[] {
-	"", "", /* empty names to match enum */
+static const char *opname[] = {
 	"||",
 	"&&",
 	"|",
@@ -23,6 +22,7 @@ static const char *opname[] {
 	"<<", ">>",
 	"+", "-",
 	"*", "/", "%",
+	"!", "~",
 	NULL
 };
 
@@ -55,7 +55,7 @@ push()
 }
 
 void Lexer::
-number(List<Lexem> &list)
+number(LexemList *list)
 {
 	int res;
 	for (;;) {
@@ -70,27 +70,22 @@ number(List<Lexem> &list)
 	unget();
 	end();
 	sscanf(buf, "%d", &res);
-	list.insert(Lexem(res));
+	list->insert(Lexem(res));
 }
 
+/* sign = sign of number | operation */
 void Lexer::
-sign(List<Lexem> &list)
+sign(LexemList *list)
 {
-	OpType type = ch == '+' ? UPLUS : UMINUS;
 	push();
 	get();
 	if (isdigit(ch)) {
 		number(list);
 		return;
 	}
-	if (isalpha(ch)) {
-		list.insert(Lexem(type));
-		unget();
-		return;
-	}
 	if (strchr(delimiters, ch)) {
-		type = buf[0] == '+' ? ADD : SUB;
-		list.insert(Lexem(type));
+		OpType type = buf[0] == '+' ? ADD : SUB;
+		list->insert(Lexem(type));
 		unget();
 		return;
 	}
@@ -102,7 +97,7 @@ sign(List<Lexem> &list)
 }
 
 void Lexer::
-ident(List<Lexem> &list)
+ident(LexemList *list)
 {
 	for (;;) {
 		push();
@@ -115,11 +110,13 @@ ident(List<Lexem> &list)
 	}
 	unget();
 	end();
-	list.insert(Lexem(buf));
+	list->insert(Lexem(buf));
 }
 
+
+/* word = statement | identifier | data type */
 void Lexer::
-word(List<Lexem> &list)
+word(LexemList *list)
 {
 	int type;
 	for (;;) {
@@ -141,18 +138,18 @@ word(List<Lexem> &list)
 	if (type < 0) {
 		type = look(dataType);
 		if (type < 0)
-			list.insert(Lexem(buf));
+			list->insert(Lexem(buf));
 		else
-			list.insert((DataType) type);
+			list->insert((DataType) type);
 		return;
 	}
-	list.insert(Lexem((StatementType) type));
+	list->insert(Lexem((StatementType) type));
 }
 
 void Lexer::
-equalsign(List<Lexem> &list)
+equalsign(LexemList *list)
 {
-	list.insert(Lexem(EQUALSIGN));
+	list->insert(Lexem(EQUALSIGN));
 	get();
 	if (!isspace(ch))
 		errx(EXIT_FAILURE, "BAD LEXEM");
@@ -160,7 +157,7 @@ equalsign(List<Lexem> &list)
 }
 
 void Lexer::
-operation(List<Lexem> &list)
+operation(LexemList *list)
 {
 	int type;
 	for (;;) {
@@ -177,46 +174,46 @@ operation(List<Lexem> &list)
 	type = look(opname);
 	if (type < 0)
 		errx(EXIT_FAILURE, "BAD LEXEM");
-	list.insert(Lexem((OpType) type));
+	list->insert(Lexem((OpType) type));
 }
 
 void Lexer::
-delimiter(List<Lexem> &list)
+delimiter(LexemList *list)
 {
 	switch(ch) {
 	case ',':
-		list.insert(Lexem(COMMA));
+		list->insert(Lexem(COMMA));
 		break;
 	case '{':
-		list.insert(Lexem(BEGIN));
+		list->insert(Lexem(BEGIN));
 		break;
 	case '}':
-		list.insert(Lexem(END));
+		list->insert(Lexem(END));
 		break;
 	case '[':
-		list.insert(Lexem(LBRACKET));
+		list->insert(Lexem(LBRACKET));
 		break;
 	case ']':
-		list.insert(Lexem(RBRACKET));
+		list->insert(Lexem(RBRACKET));
 		break;
 	case '(':
-		list.insert(Lexem(LPARENTHESIS));
+		list->insert(Lexem(LPARENTHESIS));
 		break;
 	case ')':
-		list.insert(Lexem(RPARENTHESIS));
+		list->insert(Lexem(RPARENTHESIS));
 		break;
 	case ';':
-		list.insert(Lexem(SEMICOLON));
+		list->insert(Lexem(SEMICOLON));
 		break;
 	}
 }
 
 
 /* Check DFA to understand */
-List<Lexem> Lexer::
-run()
+LexemList* Lexer::
+analyze()
 {
-	List<Lexem> list;
+	LexemList *list = new LexemList;
 	for (pos = 0;; pos = 0) {
 		get();
 		if (ch == EOF)
@@ -239,7 +236,7 @@ run()
 			errx(EXIT_FAILURE, "BAD LEXEM");
 		clear();
 	}
-	list.insert(LEX_NULL);
+	list->insert(LEX_NULL);
 	return list;
 }
 

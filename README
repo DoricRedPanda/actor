@@ -24,4 +24,6 @@ Usage
 To run the script with actor enter the following:
 	actor scriptname.act
 
-
+Documentation
+-------------
+Check doc/ directory.

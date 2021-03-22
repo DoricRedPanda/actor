@@ -7,6 +7,8 @@
 
 #define MAX_LEXEM_LENGTH 80
 
+typedef List<Lexem> LexemList;
+
 class Lexer {
 	FILE *file;
 	char buf[MAX_LEXEM_LENGTH + 1];
@@ -22,17 +24,17 @@ class Lexer {
 	/* Following functions represent states of DFA.
 	 * On success lexem is added to the list.
 	 */
-	void delimiter(List<Lexem> &list);
-	void number(List<Lexem> &l);
-	void word(List<Lexem> &l);
-	void sign(List<Lexem> &l);
-	void ident(List<Lexem> &l);
-	void equalsign(List<Lexem> &l);
-	void operation(List<Lexem> &l);
+	void delimiter(LexemList *list);
+	void number(LexemList *list);
+	void word(LexemList *list);
+	void sign(LexemList *list);
+	void ident(LexemList *list);
+	void equalsign(LexemList *list);
+	void operation(LexemList *list);
 public:
 	Lexer(FILE *file)
 		: file(file), pos(0) {}
-	List<Lexem> run();
+	LexemList* analyze();
 };
 
 #endif

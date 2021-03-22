@@ -1,16 +1,27 @@
 #ifndef LIST_H
 #define LIST_H
 
-template<class T> struct LNode {
-	T item;
-	LNode<T> *next;
-	LNode<T>(const T &item) : item(item), next(NULL) {}
-};
+#include <stddef.h>
 
 template<class T> class List {
-	LNode<T> *head;
-	LNode<T> *cur;
-	LNode<T> *tail;
+	template<class Type> struct Node {
+		Type item;
+		Node<Type> *next;
+		Node<Type>(const Type &item) : item(item), next(NULL) {}
+	};
+
+	template<class Type> struct Node<Type*> {
+		Type *item;
+		Node<Type*> *next;
+		Node<Type*>(Type *item) : item(item), next(NULL) {}
+		~Node() { delete item; }
+	private:
+		Node(const Node &lnode) {}
+	};
+
+	Node<T> *head;
+	Node<T> *cur;
+	Node<T> *tail;
 public:
 	List() : head(NULL), cur(NULL), tail(NULL) {}
 	~List() { clear(); }
@@ -18,16 +29,16 @@ public:
 	void insert(const T &item)
 	{
 		if (!tail) {
-			head = cur = tail = new LNode<T>(item);
+			head = cur = tail = new Node<T>(item);
 			return;
 		}
-		tail->next = new LNode<T>(item);
+		tail->next = new Node<T>(item);
 		tail = tail->next;
 	}
 
 	void clear()
 	{
-		LNode<T> *ptr;
+		Node<T> *ptr;
 		while (head) {
 			ptr = head;
 			head = head->next;
@@ -35,7 +46,7 @@ public:
 		}
 	}
 
-	void setPos(LNode<T> *ptr) { cur = ptr; }
+	void setPos(Node<T> *ptr) { cur = ptr; }
 
 	T* next()
 	{
@@ -44,6 +55,11 @@ public:
 		T *res = &(cur->item);
 		cur = cur->next;
 		return res;
+	}
+
+	void begin()
+	{
+		cur = head;
 	}
 };
 

@@ -5,6 +5,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "interpreter.h"
 
 FILE*
 init(int argc, char *argv[])
@@ -23,14 +24,9 @@ main(int argc, char *argv[])
 {
 	FILE *file;
 	file = init(argc, argv);
-	Lexer lexer(file);
-	List<Lexem> list = lexer.run();
-	Parser parser(list);
-	parser.analyze();
-	/*
-	Interpreter interpreter(parser.run());
-	interpreter.run();
-	*/
+
+	int exit_code = Interpreter(file).run();
+
 	fclose(file);
-	return 0;
+	return exit_code;
 }

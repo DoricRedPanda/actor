@@ -2,6 +2,20 @@
 #include <stdlib.h>
 #include "parser.h"
 
+static const int precedence[] = {
+	12,
+	11,
+	10,
+	9,
+	8,
+	7, 7,
+	6, 6, 6, 6,
+	5, 5,
+	4, 4,
+	3, 3, 3,
+	2, 2
+};
+
 void Parser::
 get()
 {
@@ -9,39 +23,42 @@ get()
 	lextype =  lexem->getType();
 	if (lextype == IDENTIFIER)
 		idname = lexem->getIdentifier();
-	else if (lextype == DATA_TYPE)
-		dtype = lexem->getDataType();
 }
 
 void Parser::
-declare()
+declare(Poliz *poliz)
 {
 	int res;
-	Identifier ident(dtype);
+	Variable *v = new Variable(0);
+	poliz->insert(v);
+	Identifier ident(dtype, v->getPointer());
 	res = symbolTable.insert(idname, ident);
 	if (res < 0)
 		errx(EXIT_FAILURE, "Identifier is already declared!");
 }
 
 void Parser::
-checkId()
+checkId(Poliz *poliz)
 {
 	Identifier *identifier = symbolTable.find(idname);
-	if (identifier)
+	if (identifier) {
 		typeStack.push(identifier->type);
-	else
+		poliz->insert(new ConstInt((intptr_t) identifier->ptr));
+	} else {
 		errx(EXIT_FAILURE, "Not declared!");
+	}
 }
 
 void Parser::
-checkAssign()
+assignment(Poliz *poliz)
 {
 	if (typeStack.pop() != typeStack.pop())
 		errx(EXIT_FAILURE, "Assigning wrong type!");
+	poliz->insert(new Inst_mov);
 }
 
 void Parser::
-checkBinOp() //TODO redesign
+checkType()
 {
 	DataType foo, bar;
 	bar = typeStack.pop();
@@ -53,11 +70,24 @@ checkBinOp() //TODO redesign
 }
 
 void Parser::
-gvar()
+binaryOperation(Poliz *poliz) //TODO redesign
+{
+	OpType type = lexem->getOpType();
+	int curPrecedence = precedence[type];
+	while (opStack.getLength() &&
+	       precedence[opStack.front()] <= curPrecedence) {
+		insertInstruction(poliz, opStack.pop());
+		checkType();
+	}
+	opStack.push(type);
+}
+
+void Parser::
+gvar(Poliz *poliz)
 {
 	for (;;) {
 		if (lextype == COMMA) {
-			declare();
+			declare(poliz);
 			get();
 			if (lextype != IDENTIFIER)
 				errx(EXIT_FAILURE, "Identifier expected!");
@@ -68,53 +98,105 @@ gvar()
 			break;
 		errx(EXIT_FAILURE, "gvar ';' expected!");
 	}
-	declare();
+	declare(poliz);
 }
 
 void Parser::
-var()
+var(Poliz *poliz)
 {
 	//TODO Syntax analysis for local variables
+	poliz = poliz;
 }
 
 void Parser::
-expression()
+unaryOperation()
 {
-	bool isFirst = true;
-	for (;;) {
-		get();
-		if (lextype == CONST_INT) {
-			typeStack.push(INT);
-		} else if (lextype == IDENTIFIER) {
-			//TODO function call
-			checkId();
-		} else if (lextype == LPARENTHESIS) {
-			expression();
-			if (lextype != RPARENTHESIS)
-				errx(EXIT_FAILURE, "')' expected!");
-		} else if (lextype == OPERATOR) {
-			//UNARY!
-			continue;
-		} else {
-			errx(EXIT_FAILURE, "BAD EXPRESSION!");
-		}
-		if (!isFirst)
-			checkBinOp();
-		get();
-		if (lextype != OPERATOR)
-			break;
-		isFirst = false;
+	puts("UNARY");
+	OpType type = lexem->getOpType();
+	switch (type) {
+	case ADD:
+		return;
+	case SUB:
+		type = NEG;
+		break;
+	case MUL:
+		type = DEREFERENCE;
+	case NOT:
+	case BITNOT:
+		break;
+	default:
+		errx(EXIT_FAILURE, "Not unary operation!");
+	}
+	opStack.push(type);
+}
+
+void Parser::
+insertInstruction(Poliz *poliz, OpType type)
+{
+	switch (type) {
+	case ADD:
+		poliz->insert(new Inst_add);
+		break;
+	case SUB:
+		poliz->insert(new Inst_sub);
+		break;
+	case MUL:
+		poliz->insert(new Inst_mul);
+		break;
+	case DIV:
+		poliz->insert(new Inst_div);
+		break;
+	default:
+		errx(EXIT_FAILURE, "NOT IMPLEMENTED");
 	}
 }
 
 void Parser::
-keyword()
+expression(Poliz *poliz)
 {
-	//TODO goto, if, while, read, write
+	for (;;) {
+		get();
+		if (lextype == CONST_INT) {
+			typeStack.push(INT);
+			poliz->insert(new ConstInt(lexem->getInt()));
+		} else if (lextype == IDENTIFIER) {
+			checkId(poliz);
+			poliz->insert(new Inst_dereference());
+		} else if (lextype == LPARENTHESIS) {
+			opStack.push(LParentOp);
+			expression(poliz);
+			if (lextype != RPARENTHESIS)
+				errx(EXIT_FAILURE, "')' expected!");
+		} else if (lextype == OPERATOR) {
+			unaryOperation();
+			continue;
+		} else {
+			errx(EXIT_FAILURE, "BAD EXPRESSION!");
+		}
+		get();
+		if (lextype != OPERATOR)
+			break;
+		binaryOperation(poliz);
+	}
+	while (opStack.getLength()) {
+		OpType type;
+		type = opStack.pop();
+		if (type == LParentOp)
+			break;
+		insertInstruction(poliz, type);
+		checkType();
+	}
 }
 
 void Parser::
-statement()
+keyword(Poliz *poliz)
+{
+	//TODO goto, if, while, read, write
+	poliz = poliz;
+}
+
+void Parser::
+statement(Poliz *poliz)
 {
 	get();
 	if (lextype == SEMICOLON)
@@ -123,38 +205,38 @@ statement()
 		get();
 		if (lextype != EQUALSIGN)
 			errx(EXIT_FAILURE, "'=' expected!");
-		checkId();
-		expression();
-		checkAssign();
+		checkId(poliz);
+		expression(poliz);
+		assignment(poliz);
 		if (lextype != SEMICOLON)
 			errx(EXIT_FAILURE, "';' expected!");
 	} else if (lextype == STATEMENT) {
-		keyword();
+		keyword(poliz);
 	} else if (lextype == BEGIN) {
-		body();
+		body(poliz);
 	}
 
 }
 
 void Parser::
-body()
+body(Poliz *poliz)
 {
 	for (;;) {
-		statement();
+		statement(poliz);
 		if (lextype == END)
 			break;
 	}
 }
 
 void Parser::
-function()
+function(Poliz *poliz)
 {
 	get();
 	if (lextype != RPARENTHESIS)
 		errx(EXIT_FAILURE, "')' expected!");
 	get();
 	if (lextype == BEGIN)
-		body();
+		body(poliz);
 	else
 		errx(EXIT_FAILURE, "'{' expected!");
 }
@@ -164,11 +246,13 @@ dataType()
 {
 	if (lextype != DATA_TYPE)
 		errx(EXIT_FAILURE, "Data type expected!");
+	dtype = lexem->getDataType();
 }
 
-void Parser::
+Poliz* Parser::
 analyze()
 {
+	Poliz *poliz = new Poliz;
 	for (;;) {
 		get();
 		if (lextype == LEX_NULL)
@@ -179,8 +263,9 @@ analyze()
 			errx(EXIT_FAILURE, "Identifier expected!");
 		get();
 		if (lextype == LPARENTHESIS)
-			function();
+			function(poliz);
 		else
-			gvar();
+			gvar(poliz);
 	}
+	return poliz;
 }

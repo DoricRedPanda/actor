@@ -1,7 +1,7 @@
 program_name := actor
 
 CXX = g++
-CXXFLAGS = -Wall -g -Wextra -pedantic
+CXXFLAGS = -Wall -Wextra -pedantic -ansi
 linkerflags =
 
 source_dir := src
@@ -32,5 +32,7 @@ clean:
 
 uninstall:
 	$(RM) $(install_dir)/$(program_name)
+ctags:
+	ctags $(source_dir)/* $(include_dir)/*
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install uninstall ctags

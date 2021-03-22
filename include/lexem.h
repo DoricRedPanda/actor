@@ -22,7 +22,6 @@ enum DataType {
 };
 
 enum OpType {
-	UPLUS, UMINUS,
 	OR,
 	AND,
 	BITOR,
@@ -32,7 +31,13 @@ enum OpType {
 	LEQ, LT, GEQ, GT,
 	SHL, SHR,
 	ADD, SUB,
-	MUL, DIV, MOD
+	MUL, DIV, MOD,
+	NOT, BITNOT,
+	// Following operations checked at the stage of syntax analysys
+	NEG,
+	DEREFERENCE,
+	CALL,
+	LParentOp
 };
 
 enum StatementType {
@@ -94,6 +99,8 @@ public:
 	LexemType getType() const { return type; }
 	const char *getIdentifier() const { return value.id; }
 	DataType getDataType() const { return value.dtype; }
+	int getInt() const { return value.v_int; }
+	OpType getOpType() const { return value.optype; }
 };
 
 #endif

@@ -20,29 +20,27 @@
  *  nodes will be lowercase. Unknown color nodes shall be drawn as red within
  *  parentheses and have some accompanying text comment.
  */
-enum Color {RED, BLACK};
-
-template<class Key, class T> struct Node {
-	Color color;
-	const Key key;
-	T item;
-	Node *left, *right, *parent;
-
-	Node(const Key &k, const T &it, Node *prnt = NULL)
-		: color(RED), key(k), item(it)
-	{
-		left = right = NULL;
-		parent = prnt;
-	}
-};
-
 template<class Key, class T, int compare(const Key, const Key)>
 class Map {
-	Node<Key, T> *root;
+	enum Color {RED, BLACK};
+	struct Node {
+		Color color;
+		const Key key;
+		T item;
+		Node *left, *right, *parent;
+
+		Node(const Key &k, const T &it, Node *prnt = NULL)
+			: color(RED), key(k), item(it)
+		{
+			left = right = NULL;
+			parent = prnt;
+		}
+	};
+	Node *root;
 protected:
-	void leftRotate(Node<Key, T> *node)
+	void leftRotate(Node *node)
 	{
-		Node<Key, T> *head = node->right;
+		Node *head = node->right;
 		node->right = head->left;
 		if (head->left)
 			head->left->parent = node->right;
@@ -57,9 +55,9 @@ protected:
 		node->parent = head;
 	}
 
-	void rightRotate(Node<Key, T> *node)
+	void rightRotate(Node *node)
 	{
-		Node<Key, T> *head = node->left;
+		Node *head = node->left;
 		node->left = head->right;
 		if (head->right)
 			head->right->parent = node->left;
@@ -74,10 +72,10 @@ protected:
 		node->parent = head;
 	}
 
-	Node<Key, T> *getNode(const Key &key) const
+	Node *getNode(const Key &key) const
 	{
 		int cmp;
-		Node<Key, T> *node = root;
+		Node *node = root;
 		while (node) {
 			cmp = compare(node->key, key);
 			if (cmp > 0)
@@ -90,9 +88,9 @@ protected:
 		return NULL;
 	}
 
-	void rebalance(Node<Key, T> *node)
+	void rebalance(Node *node)
 	{
-		Node<Key, T> *gparent, *parent = node->parent, *uncle;
+		Node *gparent, *parent = node->parent, *uncle;
 		while (node->color == RED && parent && parent->color == RED) {
 			gparent = parent->parent; // Not NULL, because parent is red.
 			uncle = gparent->right;
@@ -177,7 +175,7 @@ protected:
 		root->color = BLACK;
 	}
 
-	void clear(Node<Key, T> *node)
+	void clear(Node *node)
 	{
 		if (!node)
 			return;
@@ -191,7 +189,7 @@ public:
 
 	T *find(const Key &key) const
 	{
-		Node<Key, T> *node = getNode(key);
+		Node *node = getNode(key);
 		return node ? &node->item : NULL;
 	}
 	T &operator[](const Key &key) const
@@ -201,7 +199,7 @@ public:
 
 	int insert(const Key &key, const T &item)
 	{
-		Node<Key, T> **link = &root, *parent = NULL;
+		Node **link = &root, *parent = NULL;
 		int cmp;
 		while (*link)
 		{
@@ -214,7 +212,7 @@ public:
 			else
 				return -1;
 		}
-		*link = new Node<Key, T>(key, item, parent);
+		*link = new Node(key, item, parent);
 		rebalance(*link);
 		return 0;
 	}
