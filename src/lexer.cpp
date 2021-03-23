@@ -96,9 +96,11 @@ sign(LexemList *list)
 	errx(EXIT_FAILURE, "BAD LEXEM");
 }
 
+/* word = statement | identifier | data type */
 void Lexer::
-ident(LexemList *list)
+word(LexemList *list)
 {
+	int type;
 	for (;;) {
 		push();
 		get();
@@ -110,37 +112,14 @@ ident(LexemList *list)
 	}
 	unget();
 	end();
-	list->insert(Lexem(buf));
-}
-
-
-/* word = statement | identifier | data type */
-void Lexer::
-word(LexemList *list)
-{
-	int type;
-	for (;;) {
-		push();
-		get();
-		if (isalpha(ch))
-			continue;
-		if (isdigit(ch)) {
-			ident(list);
-			return;
-		}
-		if (strchr(delimiters, ch))
-			break;
-		errx(EXIT_FAILURE, "BAD LEXEM");
-	}
-	unget();
-	end();
 	type = look(statement);
 	if (type < 0) {
 		type = look(dataType);
-		if (type < 0)
+		if (type < 0) {
 			list->insert(Lexem(buf));
-		else
-			list->insert((DataType) type);
+			return;
+		}
+		list->insert((DataType) type);
 		return;
 	}
 	list->insert(Lexem((StatementType) type));

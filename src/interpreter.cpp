@@ -1,21 +1,15 @@
 #include <stdint.h>
 #include "interpreter.h"
 #include "stack.h"
-#include "lexer.h"
-#include "parser.h"
 
 static int sstack_len = 2048;
 
 int Interpreter::
 run()
 {
-	Lexer lexer(file);
-	List<Lexem> *list = lexer.analyze();
-	Parser parser(*list);
-	Poliz *poliz = parser.analyze();
-	delete list;
+	lexemList = Lexer(file).analyze();
+	poliz = Parser(*lexemList).analyze();
 	int exit_code = interpret(*poliz);
-	delete poliz;
 	return exit_code;
 }
 
