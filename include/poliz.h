@@ -57,6 +57,71 @@ public:
 	void eval(SStack &stack);
 };
 
+class Inst_or: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_and: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_bitor: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_xor: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_bitand: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_eq: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_neq: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_leq: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_lt: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_geq: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_gt: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_shl: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_shr: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
 class Inst_add: public Instruction {
 public:
 	void eval(SStack &stack);
@@ -77,9 +142,30 @@ public:
 	void eval(SStack &stack);
 };
 
+class Inst_mod: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_not: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_bitnot: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
+class Inst_neg: public Instruction {
+public:
+	void eval(SStack &stack);
+};
+
 class Inst_dereference: public Instruction {
 public:
 	void eval(SStack &stack);
 };
+
 
 #endif

@@ -70,7 +70,7 @@ checkType()
 }
 
 void Parser::
-binaryOperation(Poliz *poliz) //TODO redesign
+binaryOperation(Poliz *poliz)
 {
 	OpType type = lexem->getOpType();
 	int curPrecedence = precedence[type];
@@ -111,11 +111,10 @@ var(Poliz *poliz)
 void Parser::
 unaryOperation()
 {
-	puts("UNARY");
 	OpType type = lexem->getOpType();
 	switch (type) {
 	case ADD:
-		return;
+		return; /* unary plus does nothing */
 	case SUB:
 		type = NEG;
 		break;
@@ -130,10 +129,51 @@ unaryOperation()
 	opStack.push(type);
 }
 
+
+/*TODO get rid of ugly switch */
 void Parser::
 insertInstruction(Poliz *poliz, OpType type)
 {
 	switch (type) {
+	case OR:
+		poliz->insert(new Inst_or);
+		break;
+	case AND:
+		poliz->insert(new Inst_and);
+		break;
+	case BITOR:
+		poliz->insert(new Inst_bitor);
+		break;
+	case XOR:
+		poliz->insert(new Inst_xor);
+		break;
+	case BITAND:
+		poliz->insert(new Inst_bitand);
+		break;
+	case EQ:
+		poliz->insert(new Inst_eq);
+		break;
+	case NEQ:
+		poliz->insert(new Inst_neq);
+		break;
+	case LEQ:
+		poliz->insert(new Inst_leq);
+		break;
+	case LT:
+		poliz->insert(new Inst_lt);
+		break;
+	case GEQ:
+		poliz->insert(new Inst_geq);
+		break;
+	case GT:
+		poliz->insert(new Inst_gt);
+		break;
+	case SHL:
+		poliz->insert(new Inst_shl);
+		break;
+	case SHR:
+		poliz->insert(new Inst_shr);
+		break;
 	case ADD:
 		poliz->insert(new Inst_add);
 		break;
@@ -145,6 +185,18 @@ insertInstruction(Poliz *poliz, OpType type)
 		break;
 	case DIV:
 		poliz->insert(new Inst_div);
+		break;
+	case MOD:
+		poliz->insert(new Inst_mod);
+		break;
+	case NOT:
+		poliz->insert(new Inst_not);
+		break;
+	case BITNOT:
+		poliz->insert(new Inst_bitnot);
+		break;
+	case NEG:
+		poliz->insert(new Inst_neg);
 		break;
 	default:
 		errx(EXIT_FAILURE, "NOT IMPLEMENTED");

@@ -83,17 +83,13 @@ sign(LexemList *list)
 		number(list);
 		return;
 	}
-	if (strchr(delimiters, ch)) {
-		OpType type = buf[0] == '+' ? ADD : SUB;
-		list->insert(Lexem(type));
-		unget();
-		return;
-	}
 	if (ispunct(ch)) {
 		operation(list);
 		return;
 	}
-	errx(EXIT_FAILURE, "BAD LEXEM");
+	OpType type = buf[0] == '+' ? ADD : SUB;
+	list->insert(Lexem(type));
+	unget();
 }
 
 /* word = statement | identifier | data type */

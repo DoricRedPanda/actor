@@ -10,6 +10,7 @@
 #include "poliz.h"
 
 typedef List<PolizItem*> Poliz;
+typedef List<Lexem> LexemList;
 
 struct Identifier {
 	const DataType type;
@@ -19,7 +20,7 @@ struct Identifier {
 };
 
 class Parser {
-	List<Lexem> &list;
+	LexemList &list;
 	Map<const char *, Identifier, strcmp> symbolTable;
 	Stack<DataType> typeStack;
 	Stack<OpType> opStack;
@@ -49,7 +50,7 @@ class Parser {
 	/* Poliz building */
 	void insertInstruction(Poliz *poliz, OpType type);
 public:
-	Parser(List<Lexem> &list)
+	Parser(LexemList &list)
 		: list(list), typeStack(80), opStack(80) {}
 	Poliz* analyze();
 };
