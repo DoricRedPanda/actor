@@ -43,7 +43,7 @@ checkId(Poliz *poliz)
 	Identifier *identifier = symbolTable.find(idname);
 	if (identifier) {
 		typeStack.push(identifier->type);
-		poliz->insert(new ConstInt((intptr_t) identifier->ptr));
+		poliz->insert(new ConstInt(reinterpret_cast<intptr_t>(identifier->ptr)));
 	} else {
 		errx(EXIT_FAILURE, "Not declared!");
 	}

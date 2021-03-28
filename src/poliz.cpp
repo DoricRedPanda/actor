@@ -5,7 +5,7 @@ eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	printf("%ld\n", bar);
-	int *foo = (int*) stack.pop();
+	int *foo = reinterpret_cast<int*>(stack.pop());
 	*foo = bar;
 }
 
@@ -182,6 +182,6 @@ eval(SStack &stack)
 void Inst_dereference::
 eval(SStack &stack)
 {
-	int *foo = (int*) stack.pop(); //TODO redesign
+	int *foo = reinterpret_cast<int*>(stack.pop());
 	stack.push(*foo);
 }

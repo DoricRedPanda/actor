@@ -51,6 +51,7 @@ enum StatementType {
 
 class Lexem {
 	const LexemType type;
+	int line;
 	union Value {
 		const OpType optype;
 		const DataType dtype;
@@ -74,28 +75,36 @@ class Lexem {
 	}
 public:
 	Lexem(const Lexem &lex)
-		: type(lex.type), value(lex.value)
+		: type(lex.type), line(lex.line), value(lex.value)
 	{
 		if (type == IDENTIFIER)
 			value.id = dupIdentifier(lex.value.id);
 	}
-	Lexem(LexemType type)
-		: type(type) {}
-	Lexem(const char *id)
-		: type(IDENTIFIER), value(dupIdentifier(id)) {}
-	Lexem(OpType optype)
-		: type(OPERATOR), value(optype) {}
-	Lexem(int num)
-		: type(CONST_INT), value(num) {}
-	Lexem(StatementType stype)
-		: type(STATEMENT), value(stype) {}
-	Lexem(DataType dtype)
-		: type(DATA_TYPE), value(dtype) {}
+
+	Lexem(int line, LexemType type)
+		: type(type), line(line) {}
+
+	Lexem(int line, const char *id)
+		: type(IDENTIFIER), line(line), value(dupIdentifier(id)) {}
+
+	Lexem(int line, OpType optype)
+		: type(OPERATOR), line(line), value(optype) {}
+
+	Lexem(int line, int num)
+		: type(CONST_INT), line(line), value(num) {}
+
+	Lexem(int line, StatementType stype)
+		: type(STATEMENT), line(line), value(stype) {}
+
+	Lexem(int line, DataType dtype)
+		: type(DATA_TYPE), line(line), value(dtype) {}
+
 	~Lexem()
 	{
 		if (type == IDENTIFIER)
 			delete [] value.id;
 	}
+
 	LexemType getType() const { return type; }
 	const char *getIdentifier() const { return value.id; }
 	DataType getDataType() const { return value.dtype; }

@@ -14,6 +14,7 @@ class Lexer {
 	char buf[MAX_LEXEM_LENGTH + 1];
 	int pos;
 	int ch;
+	int line;
 	void get() { ch = fgetc(file); }
 	void unget() { ungetc(ch, file); }
 	void push();
@@ -29,11 +30,10 @@ class Lexer {
 	void word(LexemList *list);
 	void sign(LexemList *list);
 	void ident(LexemList *list);
-	void equalsign(LexemList *list);
 	void operation(LexemList *list);
 public:
 	Lexer(FILE *file)
-		: file(file), pos(0) {}
+		: file(file), pos(0), line(0) {}
 	LexemList* analyze();
 };
 

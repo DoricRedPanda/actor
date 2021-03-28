@@ -50,7 +50,7 @@ void Lexer::
 push()
 {
 	if (pos == MAX_LEXEM_LENGTH)
-		errx(EXIT_FAILURE, "BUFFER OVERFLOW");
+		errx(EXIT_FAILURE, "\t%d\t | \tWord is too long", line);
 	buf[pos++] = ch;
 }
 
@@ -65,12 +65,12 @@ number(LexemList *list)
 			continue;
 		if (strchr(delimiters, ch))
 			break;
-		errx(EXIT_FAILURE, "BAD LEXEM");
+		errx(EXIT_FAILURE, "\t%d\t | \tInvalid suffix on integer constant", line);
 	}
 	unget();
 	end();
 	sscanf(buf, "%d", &res);
-	list->insert(Lexem(res));
+	list->insert(Lexem(line, res));
 }
 
 /* sign = sign of number | operation */
@@ -81,15 +81,13 @@ sign(LexemList *list)
 	get();
 	if (isdigit(ch)) {
 		number(list);
-		return;
-	}
-	if (ispunct(ch)) {
+	} else if (ispunct(ch)) {
 		operation(list);
-		return;
+	} else {
+		OpType type = buf[0] == '+' ? ADD : SUB;
+		list->insert(Lexem(line, type));
+		unget();
 	}
-	OpType type = buf[0] == '+' ? ADD : SUB;
-	list->insert(Lexem(type));
-	unget();
 }
 
 /* word = statement | identifier | data type */
@@ -104,7 +102,7 @@ word(LexemList *list)
 			continue;
 		if (strchr(delimiters, ch))
 			break;
-		errx(EXIT_FAILURE, "BAD LEXEM");
+		errx(EXIT_FAILURE, "\t%d\t | \tUnexpected character %c", line, ch);
 	}
 	unget();
 	end();
@@ -112,23 +110,13 @@ word(LexemList *list)
 	if (type < 0) {
 		type = look(dataType);
 		if (type < 0) {
-			list->insert(Lexem(buf));
+			list->insert(Lexem(line, buf));
 			return;
 		}
-		list->insert((DataType) type);
+		list->insert(Lexem(line, static_cast<DataType>(type)));
 		return;
 	}
-	list->insert(Lexem((StatementType) type));
-}
-
-void Lexer::
-equalsign(LexemList *list)
-{
-	list->insert(Lexem(EQUALSIGN));
-	get();
-	if (!isspace(ch))
-		errx(EXIT_FAILURE, "BAD LEXEM");
-	unget();
+	list->insert(Lexem(line, static_cast<StatementType>(type)));
 }
 
 void Lexer::
@@ -142,14 +130,19 @@ operation(LexemList *list)
 			continue;
 		if (strchr(delimiters, ch))
 			break;
-		errx(EXIT_FAILURE, "BAD LEXEM");
+		errx(EXIT_FAILURE, "\t%d\t | \tInvalid suffix on operation", line);
 	}
 	unget();
 	end();
 	type = look(opname);
-	if (type < 0)
-		errx(EXIT_FAILURE, "BAD LEXEM");
-	list->insert(Lexem((OpType) type));
+	if (type < 0) {
+		if (!strcmp(buf, "=")) {
+			list->insert(Lexem(line, EQUALSIGN));
+			return;
+		}
+		errx(EXIT_FAILURE, "\t%d\t | \tUnrecognized operator", line);
+	}
+	list->insert(Lexem(line, static_cast<OpType>(type)));
 }
 
 void Lexer::
@@ -157,28 +150,31 @@ delimiter(LexemList *list)
 {
 	switch(ch) {
 	case ',':
-		list->insert(Lexem(COMMA));
+		list->insert(Lexem(line, COMMA));
 		break;
 	case '{':
-		list->insert(Lexem(BEGIN));
+		list->insert(Lexem(line, BEGIN));
 		break;
 	case '}':
-		list->insert(Lexem(END));
+		list->insert(Lexem(line, END));
 		break;
 	case '[':
-		list->insert(Lexem(LBRACKET));
+		list->insert(Lexem(line, LBRACKET));
 		break;
 	case ']':
-		list->insert(Lexem(RBRACKET));
+		list->insert(Lexem(line, RBRACKET));
 		break;
 	case '(':
-		list->insert(Lexem(LPARENTHESIS));
+		list->insert(Lexem(line, LPARENTHESIS));
 		break;
 	case ')':
-		list->insert(Lexem(RPARENTHESIS));
+		list->insert(Lexem(line, RPARENTHESIS));
 		break;
 	case ';':
-		list->insert(Lexem(SEMICOLON));
+		list->insert(Lexem(line, SEMICOLON));
+		break;
+	case '\n':
+		line++;
 		break;
 	}
 }
@@ -193,8 +189,6 @@ analyze()
 		get();
 		if (ch == EOF)
 			break;
-		if (isspace(ch))
-			continue;
 		if (strchr(delimiters, ch))
 			delimiter(list);
 		else if (isdigit(ch))
@@ -203,15 +197,13 @@ analyze()
 			sign(list);
 		else if (isalpha(ch))
 			word(list);
-		else if (ch == '=')
-			equalsign(list);
 		else if (ispunct(ch))
 			operation(list);
 		else
-			errx(EXIT_FAILURE, "BAD LEXEM");
+			errx(EXIT_FAILURE, "\t%d\t | \tInvalid character", line);
 		clear();
 	}
-	list->insert(LEX_NULL);
+	list->insert(Lexem(line, LEX_NULL));
 	return list;
 }
 
