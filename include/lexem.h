@@ -106,6 +106,7 @@ public:
 	}
 
 	LexemType getType() const { return type; }
+	int getLineNumber() const { return line; }
 	const char *getIdentifier() const { return value.id; }
 	DataType getDataType() const { return value.dtype; }
 	int getInt() const { return value.v_int; }
