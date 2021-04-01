@@ -39,6 +39,7 @@ class Parser {
 	void statement(Poliz *poliz);
 	void keyword(Poliz *poliz);
 	void expression(Poliz *poliz);
+	void expressionArg(Poliz *poliz);
 	/* semantic analyzer */
 	void declare(Poliz *poliz);
 	void checkId(Poliz *poliz);

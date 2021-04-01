@@ -221,29 +221,36 @@ insertInstruction(Poliz *poliz, OpType type)
 }
 
 void Parser::
+expressionArg(Poliz *poliz)
+{
+	if (lextype == CONST_INT) {
+		typeStack.push(INT);
+		poliz->insert(new ConstInt(lexem->getInt()));
+	} else if (lextype == IDENTIFIER) {
+		checkId(poliz);
+		poliz->insert(new Inst_dereference());
+	} else if (lextype == LPARENTHESIS) {
+		opStack.push(LParentOp);
+		expression(poliz);
+		if (lextype != RPARENTHESIS)
+			errx(EXIT_FAILURE, err_rparentheses,
+			     lexem->getLineNumber());
+	} else {
+		errx(EXIT_FAILURE, err_expression,
+		     lexem->getLineNumber());
+	}
+}
+
+void Parser::
 expression(Poliz *poliz) /* TODO redesign */
 {
 	for (;;) {
 		get();
-		if (lextype == CONST_INT) {
-			typeStack.push(INT);
-			poliz->insert(new ConstInt(lexem->getInt()));
-		} else if (lextype == IDENTIFIER) {
-			checkId(poliz);
-			poliz->insert(new Inst_dereference());
-		} else if (lextype == LPARENTHESIS) {
-			opStack.push(LParentOp);
-			expression(poliz);
-			if (lextype != RPARENTHESIS)
-				errx(EXIT_FAILURE, err_rparentheses,
-				     lexem->getLineNumber());
-		} else if (lextype == OPERATOR) {
+		if (lextype == OPERATOR) {
 			unaryOperation();
 			continue;
-		} else {
-			errx(EXIT_FAILURE, err_expression,
-			     lexem->getLineNumber());
 		}
+		expressionArg(poliz);
 		get();
 		if (lextype != OPERATOR)
 			break;
@@ -269,7 +276,6 @@ keyword(Poliz *poliz)
 void Parser::
 statement(Poliz *poliz)
 {
-	get();
 	if (lextype == SEMICOLON)
 		return;
 	if (lextype == IDENTIFIER) {
@@ -295,9 +301,13 @@ void Parser::
 body(Poliz *poliz)
 {
 	for (;;) {
-		statement(poliz);
+		get();
 		if (lextype == END)
 			break;
+		if (lextype == LEX_NULL)
+			err(EXIT_FAILURE, err_rbrace,
+			    lexem->getLineNumber());
+		statement(poliz);
 	}
 }
 
