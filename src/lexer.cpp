@@ -4,7 +4,7 @@
 #include <string.h>
 #include "lexer.h"
 
-static const char delimiters[] = " \f\n\r\t\v,;()[]{}*:";
+static const char delimiters[] = " \f\n\r\t\v,;()[]{}:";
 
 static const char *dataType[] = {
 	"int",
@@ -153,6 +153,7 @@ operation(LexemList *list)
 	list->insert(Lexem(line, static_cast<OpType>(type)));
 }
 
+/* TODO: Redesign */
 void Lexer::
 delimiter(LexemList *list)
 {
@@ -162,9 +163,6 @@ delimiter(LexemList *list)
 		break;
 	case ':':
 		list->insert(Lexem(line, TWO_SPOT));
-		break;
-	case '*':
-		list->insert(Lexem(line, MUL));
 		break;
 	case '{':
 		list->insert(Lexem(line, BEGIN));
