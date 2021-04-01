@@ -1,3 +1,5 @@
+#include <err.h>
+#include <stdlib.h>
 #include "poliz.h"
 
 void Inst_mov::
@@ -145,6 +147,8 @@ eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
+	if (!bar)
+		errx(EXIT_FAILURE, "RT: division by zero");
 	foo /= bar;
 	stack.push(foo);
 }
@@ -154,6 +158,8 @@ eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
+	if (!bar)
+		errx(EXIT_FAILURE, "RT: division by zero");
 	foo %= bar;
 	stack.push(foo);
 }
