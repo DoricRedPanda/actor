@@ -8,7 +8,7 @@ template <class T> class Stack {
 	size_t size;
 	size_t tail;
 protected:
-	void expand(int additional)
+	void expand(size_t additional)
 	{
 		size += additional;
 		item = (T *) realloc(item, size * sizeof(T));
@@ -34,7 +34,7 @@ public:
 
 	T pop() { return item[--tail]; }
 	T front() const { return item[tail - 1]; }
-	int getLength() const { return tail; }
+	size_t getLength() const { return tail; }
 	~Stack() { free(item); }
 };
 #endif

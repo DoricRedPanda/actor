@@ -3,22 +3,23 @@
 
 #include <stddef.h>
 
+template<class Type> struct Node {
+	Type item;
+	Node *next;
+	Node(const Type &item) : item(item), next(NULL) {}
+};
+
+template<class Type> struct Node<Type*> {
+private:
+	Node(const Node &lnode);
+public:
+	Type *item;
+	Node *next;
+	Node(Type *item) : item(item), next(NULL) {}
+	~Node() { delete item; }
+};
+
 template<class T> class List {
-	template<class Type> struct Node {
-		Type item;
-		Node<Type> *next;
-		Node<Type>(const Type &item) : item(item), next(NULL) {}
-	};
-
-	template<class Type> struct Node<Type*> {
-		Type *item;
-		Node<Type*> *next;
-		Node<Type*>(Type *item) : item(item), next(NULL) {}
-		~Node() { delete item; }
-	private:
-		Node(const Node &lnode) {}
-	};
-
 	Node<T> *head;
 	Node<T> *cur;
 	Node<T> *tail;
@@ -47,6 +48,8 @@ public:
 	}
 
 	void setPos(Node<T> *ptr) { cur = ptr; }
+	Node<T> *getPos() const { return cur; }
+	void begin() { cur = head; }
 
 	T* next()
 	{
@@ -57,10 +60,6 @@ public:
 		return res;
 	}
 
-	void begin()
-	{
-		cur = head;
-	}
 };
 
 #endif
