@@ -4,7 +4,7 @@
 #include <string.h>
 #include "lexer.h"
 
-static const char delimiters[] = " \f\n\r\t\v,;()[]{}*";
+static const char delimiters[] = " \f\n\r\t\v,;()[]{}*:";
 
 static const char *dataType[] = {
 	"int",
@@ -36,6 +36,14 @@ static const char *statement[] = {
 	NULL
 };
 
+static const char err_wordlen[] = "\t%d\t|\tWord is too long";
+static const char err_int_suffix[] = "\t%d\t|\tInvalid suffix on integer constant";
+static const char err_invalid_char[] = "\t%d\t|\tUnexpected character %c";
+static const char err_op_suffix[] = "\t%d\t|\tInvalid suffix on operation";
+static const char err_invalid_op[] = "\t%d\t|\tUnrecognized operator";
+static const char err_unreachable[] = "\t%d\t|\tLexical analyzer state should be unreachable!";
+
+
 int Lexer::
 look(const char *table[]) const
 {
@@ -50,7 +58,7 @@ void Lexer::
 push()
 {
 	if (pos == MAX_LEXEM_LENGTH)
-		errx(EXIT_FAILURE, "\t%d\t | \tWord is too long", line);
+		errx(EXIT_FAILURE, err_wordlen, line);
 	buf[pos++] = ch;
 }
 
@@ -65,7 +73,7 @@ number(LexemList *list)
 			continue;
 		if (strchr(delimiters, ch))
 			break;
-		errx(EXIT_FAILURE, "\t%d\t | \tInvalid suffix on integer constant", line);
+		errx(EXIT_FAILURE, err_int_suffix, line);
 	}
 	unget();
 	end();
@@ -102,21 +110,21 @@ word(LexemList *list)
 			continue;
 		if (strchr(delimiters, ch))
 			break;
-		errx(EXIT_FAILURE, "\t%d\t | \tUnexpected character %c", line, ch);
+		errx(EXIT_FAILURE, err_invalid_char, line, ch);
 	}
 	unget();
 	end();
 	type = look(statement);
-	if (type < 0) {
-		type = look(dataType);
-		if (type < 0) {
-			list->insert(Lexem(line, buf));
-			return;
-		}
+	if (type >= 0) {
+		list->insert(Lexem(line, static_cast<StatementType>(type)));
+		return;
+	}
+	type = look(dataType);
+	if (type >= 0) {
 		list->insert(Lexem(line, static_cast<DataType>(type)));
 		return;
 	}
-	list->insert(Lexem(line, static_cast<StatementType>(type)));
+	list->insert(Lexem(line, buf));
 }
 
 void Lexer::
@@ -130,7 +138,7 @@ operation(LexemList *list)
 			continue;
 		if (strchr(delimiters, ch))
 			break;
-		errx(EXIT_FAILURE, "\t%d\t | \tInvalid suffix on operation", line);
+		errx(EXIT_FAILURE, err_op_suffix, line);
 	}
 	unget();
 	end();
@@ -140,7 +148,7 @@ operation(LexemList *list)
 			list->insert(Lexem(line, EQUALSIGN));
 			return;
 		}
-		errx(EXIT_FAILURE, "\t%d\t | \tUnrecognized operator", line);
+		errx(EXIT_FAILURE, err_invalid_op, line);
 	}
 	list->insert(Lexem(line, static_cast<OpType>(type)));
 }
@@ -151,6 +159,12 @@ delimiter(LexemList *list)
 	switch(ch) {
 	case ',':
 		list->insert(Lexem(line, COMMA));
+		break;
+	case ':':
+		list->insert(Lexem(line, TWO_SPOT));
+		break;
+	case '*':
+		list->insert(Lexem(line, MUL));
 		break;
 	case '{':
 		list->insert(Lexem(line, BEGIN));
@@ -200,7 +214,7 @@ analyze()
 		else if (ispunct(ch))
 			operation(list);
 		else
-			errx(EXIT_FAILURE, "\t%d\t | \tInvalid character", line);
+			errx(EXIT_FAILURE, err_invalid_char, line, ch);
 		clear();
 	}
 	list->insert(Lexem(line, LEX_NULL));

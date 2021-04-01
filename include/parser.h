@@ -10,7 +10,6 @@
 #include "poliz.h"
 
 typedef List<PolizItem*> Poliz;
-typedef List<Lexem> LexemList;
 
 struct Identifier {
 	const DataType type;

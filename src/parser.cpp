@@ -16,6 +16,20 @@ static const int precedence[] = {
 	2, 2
 };
 
+static const char err_rep_decl[] = "\t%d\t|\tIdentifier is already declared";
+static const char err_not_decl[] = "\t%d\t|\tNot declared";
+static const char err_type_assign[] = "\t%d\t|\tAssignment requires matching types";
+static const char err_identifier[] = "\t%d\t|\tIdentifier expected";
+static const char err_semicolon[] = "\t%d\t|\tSemicolon expected";
+static const char err_type[] = "\t%d\t|\tOperator requires matching types";
+static const char err_unary[] = "\t%d\t|\tUnary operation expected";
+static const char err_rparentheses[] = "\t%d\t|\t')' expected";
+static const char err_expression[] = "\t%d\t|\tInvalid expression";
+static const char err_equal[] = "\t%d\t|\t'=' expected";
+static const char err_rbrace[] = "\t%d\t|\t'{' expected";
+static const char err_dtype[] = "\t%d\t|\tData type expected";
+static const char err_implementation[] = "\t%d\t|\tOperator is not implemented";
+
 void Parser::
 get()
 {
@@ -34,8 +48,7 @@ declare(Poliz *poliz)
 	Identifier ident(dtype, v->getPointer());
 	res = symbolTable.insert(idname, ident);
 	if (res < 0)
-		errx(EXIT_FAILURE, "\t%d\t|\tIdentifier is already declared",
-		     lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_rep_decl, lexem->getLineNumber());
 }
 
 void Parser::
@@ -46,7 +59,7 @@ checkId(Poliz *poliz)
 		typeStack.push(identifier->type);
 		poliz->insert(new ConstInt(reinterpret_cast<intptr_t>(identifier->ptr)));
 	} else {
-		errx(EXIT_FAILURE, "\t%d\t|\tNot declared", lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_not_decl, lexem->getLineNumber());
 	}
 }
 
@@ -54,8 +67,7 @@ void Parser::
 assignment(Poliz *poliz)
 {
 	if (typeStack.pop() != typeStack.pop())
-		errx(EXIT_FAILURE, "\t%d\t|\tAssignment requires matching types",
-		     lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_type_assign, lexem->getLineNumber());
 	poliz->insert(new Inst_mov);
 }
 
@@ -68,8 +80,7 @@ checkType()
 	if (foo == bar)
 		typeStack.push(foo);
 	else
-		errx(EXIT_FAILURE, "\t%d\t|\tOperator requires matching types",
-		     lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_type, lexem->getLineNumber());
 }
 
 void Parser::
@@ -93,14 +104,14 @@ gvar(Poliz *poliz)
 			declare(poliz);
 			get();
 			if (lextype != IDENTIFIER)
-				errx(EXIT_FAILURE, "\t%d\t|\tIdentifier expected",
+				errx(EXIT_FAILURE, err_identifier,
 				     lexem->getLineNumber());
 			get();
 			continue;
 		}
 		if (lextype == SEMICOLON)
 			break;
-		errx(EXIT_FAILURE, "\t%d\t|\tSemicolon expected",
+		errx(EXIT_FAILURE, err_semicolon,
 		     lexem->getLineNumber());
 	}
 	declare(poliz);
@@ -129,8 +140,7 @@ unaryOperation()
 	case BITNOT:
 		break;
 	default:
-		errx(EXIT_FAILURE, "\t%d\t|\tUnary operation expected",
-		     lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_unary, lexem->getLineNumber());
 	}
 	opStack.push(type);
 }
@@ -205,13 +215,13 @@ insertInstruction(Poliz *poliz, OpType type)
 		poliz->insert(new Inst_neg);
 		break;
 	default:
-		errx(EXIT_FAILURE, "\t%d\t|\tOperator is not implemented",
+		errx(EXIT_FAILURE, err_implementation,
 		     lexem->getLineNumber());
 	}
 }
 
 void Parser::
-expression(Poliz *poliz)
+expression(Poliz *poliz) /* TODO redesign */
 {
 	for (;;) {
 		get();
@@ -225,13 +235,13 @@ expression(Poliz *poliz)
 			opStack.push(LParentOp);
 			expression(poliz);
 			if (lextype != RPARENTHESIS)
-				errx(EXIT_FAILURE, "\t%d\t|\t')' expected",
+				errx(EXIT_FAILURE, err_rparentheses,
 				     lexem->getLineNumber());
 		} else if (lextype == OPERATOR) {
 			unaryOperation();
 			continue;
 		} else {
-			errx(EXIT_FAILURE, "\t%d\t|\tInvalid expression",
+			errx(EXIT_FAILURE, err_expression,
 			     lexem->getLineNumber());
 		}
 		get();
@@ -265,13 +275,13 @@ statement(Poliz *poliz)
 	if (lextype == IDENTIFIER) {
 		get();
 		if (lextype != EQUALSIGN)
-			errx(EXIT_FAILURE, "\t%d\t|\t'=' expected",
+			errx(EXIT_FAILURE, err_equal,
 			     lexem->getLineNumber());
 		checkId(poliz);
 		expression(poliz);
 		assignment(poliz);
 		if (lextype != SEMICOLON)
-			errx(EXIT_FAILURE, "\t%d\t|\tSemicolon expected",
+			errx(EXIT_FAILURE, err_semicolon,
 			     lexem->getLineNumber());
 	} else if (lextype == STATEMENT) {
 		keyword(poliz);
@@ -296,13 +306,13 @@ function(Poliz *poliz)
 {
 	get();
 	if (lextype != RPARENTHESIS)
-		errx(EXIT_FAILURE, "\t%d\t|\t')' expected",
+		errx(EXIT_FAILURE, err_rparentheses,
 		     lexem->getLineNumber());
 	get();
 	if (lextype == BEGIN)
 		body(poliz);
 	else
-		errx(EXIT_FAILURE, "\t%d\t|\t'{' expected",
+		errx(EXIT_FAILURE, err_rbrace,
 		     lexem->getLineNumber());
 }
 
@@ -310,8 +320,7 @@ void Parser::
 dataType()
 {
 	if (lextype != DATA_TYPE)
-		errx(EXIT_FAILURE, "\t%d\t|\tData type expected",
-		     lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_dtype, lexem->getLineNumber());
 	dtype = lexem->getDataType();
 }
 
@@ -326,7 +335,7 @@ analyze()
 		dataType();
 		get();
 		if (lextype != IDENTIFIER)
-			errx(EXIT_FAILURE, "\t%d\t|\tIdentifier expected",
+			errx(EXIT_FAILURE, err_identifier,
 			     lexem->getLineNumber());
 		get();
 		if (lextype == LPARENTHESIS)

@@ -1,6 +1,9 @@
 #ifndef LEXEM_H
 #define LEXEM_H
 
+#include "list.h"
+
+
 enum LexemType {
 	LEX_NULL,
 	BEGIN,
@@ -14,7 +17,8 @@ enum LexemType {
 	IDENTIFIER,
 	OPERATOR,
 	SEMICOLON,
-	COMMA
+	COMMA,
+	TWO_SPOT
 };
 
 enum DataType {
@@ -112,5 +116,8 @@ public:
 	int getInt() const { return value.v_int; }
 	OpType getOpType() const { return value.optype; }
 };
+
+
+typedef List<Lexem> LexemList;
 
 #endif

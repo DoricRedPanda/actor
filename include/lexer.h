@@ -7,8 +7,6 @@
 
 #define MAX_LEXEM_LENGTH 80
 
-typedef List<Lexem> LexemList;
-
 class Lexer {
 	FILE *file;
 	char buf[MAX_LEXEM_LENGTH + 1];
