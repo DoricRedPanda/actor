@@ -23,12 +23,15 @@ static const char err_identifier[] = "\t%d\t|\tIdentifier expected";
 static const char err_semicolon[] = "\t%d\t|\tSemicolon expected";
 static const char err_type[] = "\t%d\t|\tOperator requires matching types";
 static const char err_unary[] = "\t%d\t|\tUnary operation expected";
-static const char err_rparentheses[] = "\t%d\t|\t')' expected";
+static const char err_rparent[] = "\t%d\t|\t')' expected";
 static const char err_expression[] = "\t%d\t|\tInvalid expression";
 static const char err_equal[] = "\t%d\t|\t'=' expected";
-static const char err_rbrace[] = "\t%d\t|\t'{' expected";
+static const char err_lbrace[] = "\t%d\t|\t'{' expected";
+static const char err_not_closed[] = "\t%d\t|\tBlock not closed";
 static const char err_dtype[] = "\t%d\t|\tData type expected";
-static const char err_implementation[] = "\t%d\t|\tOperator is not implemented";
+static const char err_implementation[] = "\t%d\t|\tNot implemented";
+static const char err_label[] = "\t%d\t|\tUndefined label";
+static const char err_bad_statement[] = "\t%d\t|\tStatement expected";
 
 void Parser::
 get()
@@ -48,7 +51,7 @@ declare(Poliz *poliz)
 	Identifier ident(dtype, v->getPointer());
 	res = symbolTable.insert(idname, ident);
 	if (res < 0)
-		errx(EXIT_FAILURE, err_rep_decl, token->getLineNumber());
+		errx(EXIT_FAILURE, err_rep_decl, token->getPos());
 }
 
 void Parser::
@@ -59,15 +62,15 @@ checkId(Poliz *poliz)
 		typeStack.push(identifier->type);
 		poliz->insert(new ConstInt(reinterpret_cast<intptr_t>(identifier->ptr)));
 	} else {
-		errx(EXIT_FAILURE, err_not_decl, token->getLineNumber());
+		errx(EXIT_FAILURE, err_not_decl, token->getPos());
 	}
 }
 
 void Parser::
-assignment(Poliz *poliz)
+checkAssignment(Poliz *poliz)
 {
 	if (typeStack.pop() != typeStack.pop())
-		errx(EXIT_FAILURE, err_type_assign, token->getLineNumber());
+		errx(EXIT_FAILURE, err_type_assign, token->getPos());
 	poliz->insert(new Inst_mov);
 }
 
@@ -80,7 +83,7 @@ checkType()
 	if (foo == bar)
 		typeStack.push(foo);
 	else
-		errx(EXIT_FAILURE, err_type, token->getLineNumber());
+		errx(EXIT_FAILURE, err_type, token->getPos());
 }
 
 void Parser::
@@ -91,7 +94,6 @@ binaryOperation(Poliz *poliz)
 	while (opStack.getLength() &&
 	       precedence[opStack.front()] <= curPrecedence) {
 		insertInstruction(poliz, opStack.pop());
-		checkType();
 	}
 	opStack.push(type);
 }
@@ -105,14 +107,13 @@ gvar(Poliz *poliz)
 			get();
 			if (tokenType != IDENTIFIER)
 				errx(EXIT_FAILURE, err_identifier,
-				     token->getLineNumber());
+				     token->getPos());
 			get();
 			continue;
 		}
 		if (tokenType == SEMICOLON)
 			break;
-		errx(EXIT_FAILURE, err_semicolon,
-		     token->getLineNumber());
+		errx(EXIT_FAILURE, err_semicolon, token->getPos());
 	}
 	declare(poliz);
 }
@@ -140,11 +141,199 @@ unaryOperation()
 	case BITNOT:
 		break;
 	default:
-		errx(EXIT_FAILURE, err_unary, token->getLineNumber());
+		errx(EXIT_FAILURE, err_unary, token->getPos());
 	}
 	opStack.push(type);
 }
 
+void Parser::
+expressionArg(Poliz *poliz)
+{
+	if (tokenType == CONST_INT) {
+		typeStack.push(INT);
+		poliz->insert(new ConstInt(token->getInt()));
+	} else if (tokenType == IDENTIFIER) {
+		checkId(poliz);
+		poliz->insert(new Inst_dereference());
+	} else if (tokenType == LPARENTHESIS) {
+		opStack.push(LParentOp);
+		expression(poliz);
+		if (tokenType != RPARENTHESIS)
+			errx(EXIT_FAILURE, err_rparent, token->getPos());
+	} else {
+		errx(EXIT_FAILURE, err_expression, token->getPos());
+	}
+}
+
+void Parser::
+expression(Poliz *poliz) /* TODO redesign */
+{
+	for (;;) {
+		get();
+		if (tokenType == OPERATOR) {
+			unaryOperation();
+			continue;
+		}
+		expressionArg(poliz);
+		get();
+		if (tokenType != OPERATOR)
+			break;
+		binaryOperation(poliz);
+	}
+	while (opStack.getLength()) {
+		OpType type;
+		type = opStack.pop();
+		if (type == LParentOp)
+			break;
+		insertInstruction(poliz, type);
+		checkType();
+	}
+}
+
+void Parser::
+statementGoto(Poliz *poliz)
+{
+	Node<PolizItem*> *addr;
+	get();
+	int pos = token->getPos();
+	if (tokenType != IDENTIFIER)
+		errx(EXIT_FAILURE, err_identifier, pos);
+	Identifier *ident = symbolTable.find(idname);
+	if (ident) {
+		addr = static_cast<Node<PolizItem*>*>(ident->ptr);
+		poliz->insert(new Label(addr));
+	} else {
+		Label *label = new Label(NULL);
+		poliz->insert(label);
+		labelStack.push(UndefinedLabel(idname, label, pos));
+	}
+	poliz->insert(new PolizOpGo);
+	get();
+	if (tokenType != SEMICOLON)
+		errx(EXIT_FAILURE, err_semicolon, token->getPos());
+}
+
+void Parser::
+keyword(Poliz *poliz)
+{
+	StatementType type = token->getStatementType();
+	switch (type) {
+	case GOTO:
+		statementGoto(poliz);
+		break;
+	default:
+		errx(EXIT_FAILURE, err_implementation, token->getPos());
+	}
+}
+
+void Parser::
+declareLabel(Poliz *poliz)
+{
+	int res;
+	Node<PolizItem*>* addr = poliz->getTail();
+	Identifier ident(LABEL, addr);
+	res = symbolTable.insert(idname, ident);
+	if (res < 0)
+		errx(EXIT_FAILURE, err_rep_decl, token->getPos());
+}
+
+void Parser::
+statement(Poliz *poliz)
+{
+ST:	if (tokenType == SEMICOLON)
+		return;
+	if (tokenType == IDENTIFIER) {
+		get();
+		if (tokenType == TWO_SPOT) {
+			declareLabel(poliz);
+			get();
+			goto ST;
+		}
+		if (tokenType != EQUALSIGN)
+			errx(EXIT_FAILURE, err_equal, token->getPos());
+		checkId(poliz);
+		expression(poliz);
+		checkAssignment(poliz);
+		if (tokenType != SEMICOLON)
+			errx(EXIT_FAILURE, err_semicolon, token->getPos());
+	} else if (tokenType == STATEMENT) {
+		keyword(poliz);
+	} else if (tokenType == BEGIN) {
+		body(poliz);
+	} else {
+		errx(EXIT_FAILURE, err_bad_statement, token->getPos());
+	}
+}
+
+void Parser::
+body(Poliz *poliz)
+{
+	for (;;) {
+		get();
+		if (tokenType == END)
+			break;
+		if (tokenType == TOKEN_NULL)
+			errx(EXIT_FAILURE, err_not_closed, token->getPos());
+		statement(poliz);
+	}
+}
+
+void Parser::
+function(Poliz *poliz)
+{
+	get();
+	if (tokenType != RPARENTHESIS)
+		errx(EXIT_FAILURE, err_rparent, token->getPos());
+	get();
+	if (tokenType == BEGIN)
+		body(poliz);
+	else
+		errx(EXIT_FAILURE, err_lbrace, token->getPos());
+}
+
+void Parser::
+dataType()
+{
+	if (tokenType != DATA_TYPE)
+		errx(EXIT_FAILURE, err_dtype, token->getPos());
+	dtype = token->getDataType();
+}
+
+void Parser::
+insertLabels()
+{
+	while (labelStack.getLength()) {
+		UndefinedLabel item = labelStack.pop();
+		Identifier *ident = symbolTable.find(item.id);
+		if (!ident)
+			errx(EXIT_FAILURE, err_label, item.line);
+		Node<PolizItem*> *addr;
+		addr = static_cast<Node<PolizItem*>*>(ident->ptr);
+		item.label->set(addr);
+	}
+}
+
+Poliz* Parser::
+analyze()
+{
+	Poliz *poliz = new Poliz;
+	for (;;) {
+		get();
+		if (tokenType == TOKEN_NULL)
+			break;
+		dataType();
+		get();
+		if (tokenType != IDENTIFIER)
+			errx(EXIT_FAILURE, err_identifier, token->getPos());
+		get();
+		if (tokenType == LPARENTHESIS)
+			function(poliz);
+		else
+			gvar(poliz);
+	}
+	insertLabels();
+	return poliz;
+}
 
 /*TODO get rid of ugly switch */
 void Parser::
@@ -215,143 +404,6 @@ insertInstruction(Poliz *poliz, OpType type)
 		poliz->insert(new Inst_neg);
 		break;
 	default:
-		errx(EXIT_FAILURE, err_implementation,
-		     token->getLineNumber());
+		errx(EXIT_FAILURE, err_implementation, token->getPos());
 	}
-}
-
-void Parser::
-expressionArg(Poliz *poliz)
-{
-	if (tokenType == CONST_INT) {
-		typeStack.push(INT);
-		poliz->insert(new ConstInt(token->getInt()));
-	} else if (tokenType == IDENTIFIER) {
-		checkId(poliz);
-		poliz->insert(new Inst_dereference());
-	} else if (tokenType == LPARENTHESIS) {
-		opStack.push(LParentOp);
-		expression(poliz);
-		if (tokenType != RPARENTHESIS)
-			errx(EXIT_FAILURE, err_rparentheses,
-			     token->getLineNumber());
-	} else {
-		errx(EXIT_FAILURE, err_expression,
-		     token->getLineNumber());
-	}
-}
-
-void Parser::
-expression(Poliz *poliz) /* TODO redesign */
-{
-	for (;;) {
-		get();
-		if (tokenType == OPERATOR) {
-			unaryOperation();
-			continue;
-		}
-		expressionArg(poliz);
-		get();
-		if (tokenType != OPERATOR)
-			break;
-		binaryOperation(poliz);
-	}
-	while (opStack.getLength()) {
-		OpType type;
-		type = opStack.pop();
-		if (type == LParentOp)
-			break;
-		insertInstruction(poliz, type);
-		checkType();
-	}
-}
-
-void Parser::
-keyword(Poliz *poliz)
-{
-	//TODO goto, if, while, read, write
-	poliz = poliz;
-}
-
-void Parser::
-statement(Poliz *poliz)
-{
-	if (tokenType == SEMICOLON)
-		return;
-	if (tokenType == IDENTIFIER) {
-		get();
-		if (tokenType != EQUALSIGN)
-			errx(EXIT_FAILURE, err_equal,
-			     token->getLineNumber());
-		checkId(poliz);
-		expression(poliz);
-		assignment(poliz);
-		if (tokenType != SEMICOLON)
-			errx(EXIT_FAILURE, err_semicolon,
-			     token->getLineNumber());
-	} else if (tokenType == STATEMENT) {
-		keyword(poliz);
-	} else if (tokenType == BEGIN) {
-		body(poliz);
-	}
-
-}
-
-void Parser::
-body(Poliz *poliz)
-{
-	for (;;) {
-		get();
-		if (tokenType == END)
-			break;
-		if (tokenType == TOKEN_NULL)
-			err(EXIT_FAILURE, err_rbrace,
-			    token->getLineNumber());
-		statement(poliz);
-	}
-}
-
-void Parser::
-function(Poliz *poliz)
-{
-	get();
-	if (tokenType != RPARENTHESIS)
-		errx(EXIT_FAILURE, err_rparentheses,
-		     token->getLineNumber());
-	get();
-	if (tokenType == BEGIN)
-		body(poliz);
-	else
-		errx(EXIT_FAILURE, err_rbrace,
-		     token->getLineNumber());
-}
-
-void Parser::
-dataType()
-{
-	if (tokenType != DATA_TYPE)
-		errx(EXIT_FAILURE, err_dtype, token->getLineNumber());
-	dtype = token->getDataType();
-}
-
-Poliz* Parser::
-analyze()
-{
-	Poliz *poliz = new Poliz;
-	for (;;) {
-		get();
-		if (tokenType == TOKEN_NULL)
-			break;
-		dataType();
-		get();
-		if (tokenType != IDENTIFIER)
-			errx(EXIT_FAILURE, err_identifier,
-			     token->getLineNumber());
-		get();
-		if (tokenType == LPARENTHESIS)
-			function(poliz);
-		else
-			gvar(poliz);
-	}
-	return poliz;
 }

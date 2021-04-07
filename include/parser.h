@@ -19,11 +19,18 @@ struct Identifier {
 };
 
 class Parser {
+	struct UndefinedLabel {
+		const char *id;
+		Label *label;
+		int line;
+		UndefinedLabel(const char id[], Label *label, int line)
+		    : id(id), label(label), line(line) {}
+	};
 	TokenList &list;
 	Map<const char *, Identifier, strcmp> symbolTable;
 	Stack<DataType> typeStack;
 	Stack<OpType> opStack;
-
+	Stack<UndefinedLabel> labelStack;
 	Token *token;
 	TokenType tokenType;
 	const char *idname;
@@ -40,18 +47,22 @@ class Parser {
 	void keyword(Poliz *poliz);
 	void expression(Poliz *poliz);
 	void expressionArg(Poliz *poliz);
-	/* semantic analyzer */
-	void declare(Poliz *poliz);
-	void checkId(Poliz *poliz);
-	void checkType();
 	void binaryOperation(Poliz *poliz);
 	void unaryOperation();
-	void assignment(Poliz *poliz);
+	void statementGoto(Poliz *poliz);
+	/* semantic analyzer */
+	void declare(Poliz *poliz);
+	void declareLabel(Poliz *poliz);
+	void checkId(Poliz *poliz);
+	void checkType();
+	void checkAssignment(Poliz *poliz);
+	void insertLabels();
 	/* Poliz building */
 	void insertInstruction(Poliz *poliz, OpType type);
 public:
 	Parser(TokenList *ptrList)
-		: list(*ptrList), typeStack(80), opStack(80) {}
+	    : list(*ptrList), typeStack(80),
+	      opStack(80), labelStack(80) {}
 	Poliz* analyze();
 };
 

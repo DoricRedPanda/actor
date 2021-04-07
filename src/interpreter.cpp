@@ -22,7 +22,7 @@ interpret()
 		ptr = ptrPoliz->next();
 		if (!ptr)
 			break;
-		(*ptr)->eval(stack);
+		(*ptr)->eval(stack, ptrPoliz);
 	}
 	return 0; //TODO implement error handling
 }

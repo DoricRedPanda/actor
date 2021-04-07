@@ -49,6 +49,7 @@ public:
 
 	void setPos(Node<T> *ptr) { cur = ptr; }
 	Node<T> *getPos() const { return cur; }
+	Node<T> *getTail() const { return tail; }
 	void begin() { cur = head; }
 
 	T* next()

@@ -21,7 +21,8 @@ enum TokenType {
 };
 
 enum DataType {
-	INT
+	INT,
+	LABEL
 };
 
 enum OpType {
@@ -109,9 +110,10 @@ public:
 	}
 
 	TokenType getType() const { return type; }
-	int getLineNumber() const { return line; }
+	int getPos() const { return line; }
 	const char *getIdentifier() const { return value.id; }
 	DataType getDataType() const { return value.dtype; }
+	StatementType getStatementType() const { return value.stype; }
 	int getInt() const { return value.v_int; }
 	OpType getOpType() const { return value.optype; }
 };
