@@ -1,24 +1,23 @@
-#ifndef LEXEM_H
-#define LEXEM_H
+#ifndef TOKEN_H
+#define TOKEN_H
 
 #include "list.h"
 
 
-enum LexemType {
-	LEX_NULL,
-	BEGIN,
-	END,
-	LPARENTHESIS, RPARENTHESIS,
+enum TokenType {
+	BEGIN, END,
 	LBRACKET, RBRACKET,
+	LPARENTHESIS, RPARENTHESIS,
+	COMMA,
 	EQUALSIGN,
+	TWO_SPOT,
+	SEMICOLON,
+	TOKEN_NULL,
 	DATA_TYPE,
 	CONST_INT,
 	STATEMENT,
 	IDENTIFIER,
-	OPERATOR,
-	SEMICOLON,
-	COMMA,
-	TWO_SPOT
+	OPERATOR
 };
 
 enum DataType {
@@ -53,8 +52,8 @@ enum StatementType {
 	WRITE
 };
 
-class Lexem {
-	const LexemType type;
+class Token {
+	const TokenType type;
 	int line;
 	union Value {
 		const OpType optype;
@@ -78,38 +77,38 @@ class Lexem {
 		return tmp;
 	}
 public:
-	Lexem(const Lexem &lex)
-		: type(lex.type), line(lex.line), value(lex.value)
+	Token(const Token &t)
+		: type(t.type), line(t.line), value(t.value)
 	{
 		if (type == IDENTIFIER)
-			value.id = dupIdentifier(lex.value.id);
+			value.id = dupIdentifier(t.value.id);
 	}
 
-	Lexem(int line, LexemType type)
+	Token(int line, TokenType type)
 		: type(type), line(line) {}
 
-	Lexem(int line, const char *id)
+	Token(int line, const char *id)
 		: type(IDENTIFIER), line(line), value(dupIdentifier(id)) {}
 
-	Lexem(int line, OpType optype)
+	Token(int line, OpType optype)
 		: type(OPERATOR), line(line), value(optype) {}
 
-	Lexem(int line, int num)
+	Token(int line, int num)
 		: type(CONST_INT), line(line), value(num) {}
 
-	Lexem(int line, StatementType stype)
+	Token(int line, StatementType stype)
 		: type(STATEMENT), line(line), value(stype) {}
 
-	Lexem(int line, DataType dtype)
+	Token(int line, DataType dtype)
 		: type(DATA_TYPE), line(line), value(dtype) {}
 
-	~Lexem()
+	~Token()
 	{
 		if (type == IDENTIFIER)
 			delete [] value.id;
 	}
 
-	LexemType getType() const { return type; }
+	TokenType getType() const { return type; }
 	int getLineNumber() const { return line; }
 	const char *getIdentifier() const { return value.id; }
 	DataType getDataType() const { return value.dtype; }
@@ -118,6 +117,6 @@ public:
 };
 
 
-typedef List<Lexem> LexemList;
+typedef List<Token> TokenList;
 
 #endif

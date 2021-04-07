@@ -4,14 +4,25 @@
 #include <string.h>
 #include "lexer.h"
 
-static const char delimiters[] = " \f\n\r\t\v,;()[]{}:";
+static const char delimiters[] = " \f\n\r\t\v{}[](),=:;";
 
-static const char *dataType[] = {
+static const char *lexSpecialSymbol[] = {
+	"{", "}",
+	"[", "]",
+	"(", ")",
+	",",
+	"=",
+	":",
+	";",
+	NULL
+};
+
+static const char *lexDataType[] = {
 	"int",
 	NULL
 };
 
-static const char *opname[] = {
+static const char *lexOperation[] = {
 	"||",
 	"&&",
 	"|",
@@ -26,7 +37,7 @@ static const char *opname[] = {
 	NULL
 };
 
-static const char *statement[] = {
+static const char *lexStatement[] = {
 	"goto",
 	"if",
 	"else",
@@ -57,13 +68,13 @@ look(const char *table[]) const
 void Lexer::
 push()
 {
-	if (pos == MAX_LEXEM_LENGTH)
+	if (pos == MAX_LEXEME_LENGTH)
 		errx(EXIT_FAILURE, err_wordlen, line);
 	buf[pos++] = ch;
 }
 
 void Lexer::
-number(LexemList *list)
+number(TokenList *list)
 {
 	int res;
 	for (;;) {
@@ -78,29 +89,29 @@ number(LexemList *list)
 	unget();
 	end();
 	sscanf(buf, "%d", &res);
-	list->insert(Lexem(line, res));
+	list->insert(Token(line, res));
 }
 
-/* sign = sign of number | operation */
+/* sign = part of number | operation */
 void Lexer::
-sign(LexemList *list)
+sign(TokenList *list)
 {
 	push();
 	get();
 	if (isdigit(ch)) {
 		number(list);
 	} else if (ispunct(ch)) {
-		operation(list);
+		punctuation(list);
 	} else {
 		OpType type = buf[0] == '+' ? ADD : SUB;
-		list->insert(Lexem(line, type));
+		list->insert(Token(line, type));
 		unget();
 	}
 }
 
-/* word = statement | identifier | data type */
+/* word = statement | data type | identifier */
 void Lexer::
-word(LexemList *list)
+word(TokenList *list)
 {
 	int type;
 	for (;;) {
@@ -114,108 +125,67 @@ word(LexemList *list)
 	}
 	unget();
 	end();
-	type = look(statement);
+	type = look(lexStatement);
 	if (type >= 0) {
-		list->insert(Lexem(line, static_cast<StatementType>(type)));
+		list->insert(Token(line, static_cast<StatementType>(type)));
 		return;
 	}
-	type = look(dataType);
+	type = look(lexDataType);
 	if (type >= 0) {
-		list->insert(Lexem(line, static_cast<DataType>(type)));
+		list->insert(Token(line, static_cast<DataType>(type)));
 		return;
 	}
-	list->insert(Lexem(line, buf));
+	list->insert(Token(line, buf));
 }
 
 void Lexer::
-operation(LexemList *list)
+punctuation(TokenList *list)
 {
 	int type;
-	for (;;) {
+	do {
 		push();
 		get();
-		if (ispunct(ch))
-			continue;
-		if (strchr(delimiters, ch))
-			break;
-		errx(EXIT_FAILURE, err_op_suffix, line);
-	}
+	} while(ispunct(ch) && !strchr(delimiters, ch));
 	unget();
 	end();
-	type = look(opname);
-	if (type < 0) {
-		if (!strcmp(buf, "=")) {
-			list->insert(Lexem(line, EQUALSIGN));
-			return;
-		}
-		errx(EXIT_FAILURE, err_invalid_op, line);
+	type = look(lexOperation);
+	if (type >= 0) {
+		list->insert(Token(line, static_cast<OpType>(type)));
+		return;
 	}
-	list->insert(Lexem(line, static_cast<OpType>(type)));
-}
-
-/* TODO: Redesign */
-void Lexer::
-delimiter(LexemList *list)
-{
-	switch(ch) {
-	case ',':
-		list->insert(Lexem(line, COMMA));
-		break;
-	case ':':
-		list->insert(Lexem(line, TWO_SPOT));
-		break;
-	case '{':
-		list->insert(Lexem(line, BEGIN));
-		break;
-	case '}':
-		list->insert(Lexem(line, END));
-		break;
-	case '[':
-		list->insert(Lexem(line, LBRACKET));
-		break;
-	case ']':
-		list->insert(Lexem(line, RBRACKET));
-		break;
-	case '(':
-		list->insert(Lexem(line, LPARENTHESIS));
-		break;
-	case ')':
-		list->insert(Lexem(line, RPARENTHESIS));
-		break;
-	case ';':
-		list->insert(Lexem(line, SEMICOLON));
-		break;
-	case '\n':
-		line++;
-		break;
+	type = look(lexSpecialSymbol);
+	if (type >= 0) {
+		list->insert(Token(line, static_cast<TokenType>(type)));
+		return;
 	}
+	errx(EXIT_FAILURE, err_invalid_op, line);
 }
-
 
 /* Check DFA to understand */
-LexemList* Lexer::
+TokenList* Lexer::
 analyze()
 {
-	LexemList *list = new LexemList;
+	TokenList *list = new TokenList;
 	for (pos = 0;; pos = 0) {
 		get();
 		if (ch == EOF)
 			break;
-		if (strchr(delimiters, ch))
-			delimiter(list);
-		else if (isdigit(ch))
+		if (isspace(ch)) {
+			line += ch == '\n';
+			continue;
+		} else if (isdigit(ch))
 			number(list);
 		else if (ch == '+' || ch == '-')
 			sign(list);
 		else if (isalpha(ch))
 			word(list);
 		else if (ispunct(ch))
-			operation(list);
+			punctuation(list);
 		else
 			errx(EXIT_FAILURE, err_invalid_char, line, ch);
 		clear();
 	}
-	list->insert(Lexem(line, LEX_NULL));
+	list->insert(Token(line, TOKEN_NULL));
 	return list;
 }
 

@@ -7,16 +7,16 @@
 
 class Interpreter {
 	FILE *file;
-	LexemList *lexemList;
-	Poliz *poliz;
-	int interpret(List<PolizItem*> &poliz);
+	TokenList *ptrTokenList;
+	Poliz *ptrPoliz;
+	int interpret();
 public:
 	Interpreter(FILE *file)
-		: file(file), lexemList(NULL), poliz(NULL) {}
+		: file(file), ptrTokenList(NULL), ptrPoliz(NULL) {}
 	~Interpreter()
 	{
-		delete lexemList;
-		delete poliz;
+		delete ptrTokenList;
+		delete ptrPoliz;
 	}
 	int run();
 };

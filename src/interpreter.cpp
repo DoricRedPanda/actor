@@ -7,19 +7,19 @@ static int sstack_len = 2048;
 int Interpreter::
 run()
 {
-	lexemList = Lexer(file).analyze();
-	poliz = Parser(*lexemList).analyze();
-	int exit_code = interpret(*poliz);
+	ptrTokenList = Lexer(file).analyze();
+	ptrPoliz = Parser(ptrTokenList).analyze();
+	int exit_code = interpret();
 	return exit_code;
 }
 
 int Interpreter::
-interpret(List<PolizItem*> &poliz)
+interpret()
 {
-	Stack<intptr_t> stack(sstack_len);
+	SStack stack(sstack_len);
 	PolizItem **ptr;
 	for (;;) {
-		ptr = poliz.next();
+		ptr = ptrPoliz->next();
 		if (!ptr)
 			break;
 		(*ptr)->eval(stack);

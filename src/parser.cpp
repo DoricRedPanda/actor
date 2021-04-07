@@ -33,10 +33,10 @@ static const char err_implementation[] = "\t%d\t|\tOperator is not implemented";
 void Parser::
 get()
 {
-	lexem = list.next();
-	lextype =  lexem->getType();
-	if (lextype == IDENTIFIER)
-		idname = lexem->getIdentifier();
+	token = list.next();
+	tokenType =  token->getType();
+	if (tokenType == IDENTIFIER)
+		idname = token->getIdentifier();
 }
 
 void Parser::
@@ -48,7 +48,7 @@ declare(Poliz *poliz)
 	Identifier ident(dtype, v->getPointer());
 	res = symbolTable.insert(idname, ident);
 	if (res < 0)
-		errx(EXIT_FAILURE, err_rep_decl, lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_rep_decl, token->getLineNumber());
 }
 
 void Parser::
@@ -59,7 +59,7 @@ checkId(Poliz *poliz)
 		typeStack.push(identifier->type);
 		poliz->insert(new ConstInt(reinterpret_cast<intptr_t>(identifier->ptr)));
 	} else {
-		errx(EXIT_FAILURE, err_not_decl, lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_not_decl, token->getLineNumber());
 	}
 }
 
@@ -67,7 +67,7 @@ void Parser::
 assignment(Poliz *poliz)
 {
 	if (typeStack.pop() != typeStack.pop())
-		errx(EXIT_FAILURE, err_type_assign, lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_type_assign, token->getLineNumber());
 	poliz->insert(new Inst_mov);
 }
 
@@ -80,13 +80,13 @@ checkType()
 	if (foo == bar)
 		typeStack.push(foo);
 	else
-		errx(EXIT_FAILURE, err_type, lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_type, token->getLineNumber());
 }
 
 void Parser::
 binaryOperation(Poliz *poliz)
 {
-	OpType type = lexem->getOpType();
+	OpType type = token->getOpType();
 	int curPrecedence = precedence[type];
 	while (opStack.getLength() &&
 	       precedence[opStack.front()] <= curPrecedence) {
@@ -100,19 +100,19 @@ void Parser::
 gvar(Poliz *poliz)
 {
 	for (;;) {
-		if (lextype == COMMA) {
+		if (tokenType == COMMA) {
 			declare(poliz);
 			get();
-			if (lextype != IDENTIFIER)
+			if (tokenType != IDENTIFIER)
 				errx(EXIT_FAILURE, err_identifier,
-				     lexem->getLineNumber());
+				     token->getLineNumber());
 			get();
 			continue;
 		}
-		if (lextype == SEMICOLON)
+		if (tokenType == SEMICOLON)
 			break;
 		errx(EXIT_FAILURE, err_semicolon,
-		     lexem->getLineNumber());
+		     token->getLineNumber());
 	}
 	declare(poliz);
 }
@@ -127,7 +127,7 @@ var(Poliz *poliz)
 void Parser::
 unaryOperation()
 {
-	OpType type = lexem->getOpType();
+	OpType type = token->getOpType();
 	switch (type) {
 	case ADD:
 		return; /* unary plus does nothing */
@@ -140,7 +140,7 @@ unaryOperation()
 	case BITNOT:
 		break;
 	default:
-		errx(EXIT_FAILURE, err_unary, lexem->getLineNumber());
+		errx(EXIT_FAILURE, err_unary, token->getLineNumber());
 	}
 	opStack.push(type);
 }
@@ -216,28 +216,28 @@ insertInstruction(Poliz *poliz, OpType type)
 		break;
 	default:
 		errx(EXIT_FAILURE, err_implementation,
-		     lexem->getLineNumber());
+		     token->getLineNumber());
 	}
 }
 
 void Parser::
 expressionArg(Poliz *poliz)
 {
-	if (lextype == CONST_INT) {
+	if (tokenType == CONST_INT) {
 		typeStack.push(INT);
-		poliz->insert(new ConstInt(lexem->getInt()));
-	} else if (lextype == IDENTIFIER) {
+		poliz->insert(new ConstInt(token->getInt()));
+	} else if (tokenType == IDENTIFIER) {
 		checkId(poliz);
 		poliz->insert(new Inst_dereference());
-	} else if (lextype == LPARENTHESIS) {
+	} else if (tokenType == LPARENTHESIS) {
 		opStack.push(LParentOp);
 		expression(poliz);
-		if (lextype != RPARENTHESIS)
+		if (tokenType != RPARENTHESIS)
 			errx(EXIT_FAILURE, err_rparentheses,
-			     lexem->getLineNumber());
+			     token->getLineNumber());
 	} else {
 		errx(EXIT_FAILURE, err_expression,
-		     lexem->getLineNumber());
+		     token->getLineNumber());
 	}
 }
 
@@ -246,13 +246,13 @@ expression(Poliz *poliz) /* TODO redesign */
 {
 	for (;;) {
 		get();
-		if (lextype == OPERATOR) {
+		if (tokenType == OPERATOR) {
 			unaryOperation();
 			continue;
 		}
 		expressionArg(poliz);
 		get();
-		if (lextype != OPERATOR)
+		if (tokenType != OPERATOR)
 			break;
 		binaryOperation(poliz);
 	}
@@ -276,22 +276,22 @@ keyword(Poliz *poliz)
 void Parser::
 statement(Poliz *poliz)
 {
-	if (lextype == SEMICOLON)
+	if (tokenType == SEMICOLON)
 		return;
-	if (lextype == IDENTIFIER) {
+	if (tokenType == IDENTIFIER) {
 		get();
-		if (lextype != EQUALSIGN)
+		if (tokenType != EQUALSIGN)
 			errx(EXIT_FAILURE, err_equal,
-			     lexem->getLineNumber());
+			     token->getLineNumber());
 		checkId(poliz);
 		expression(poliz);
 		assignment(poliz);
-		if (lextype != SEMICOLON)
+		if (tokenType != SEMICOLON)
 			errx(EXIT_FAILURE, err_semicolon,
-			     lexem->getLineNumber());
-	} else if (lextype == STATEMENT) {
+			     token->getLineNumber());
+	} else if (tokenType == STATEMENT) {
 		keyword(poliz);
-	} else if (lextype == BEGIN) {
+	} else if (tokenType == BEGIN) {
 		body(poliz);
 	}
 
@@ -302,11 +302,11 @@ body(Poliz *poliz)
 {
 	for (;;) {
 		get();
-		if (lextype == END)
+		if (tokenType == END)
 			break;
-		if (lextype == LEX_NULL)
+		if (tokenType == TOKEN_NULL)
 			err(EXIT_FAILURE, err_rbrace,
-			    lexem->getLineNumber());
+			    token->getLineNumber());
 		statement(poliz);
 	}
 }
@@ -315,23 +315,23 @@ void Parser::
 function(Poliz *poliz)
 {
 	get();
-	if (lextype != RPARENTHESIS)
+	if (tokenType != RPARENTHESIS)
 		errx(EXIT_FAILURE, err_rparentheses,
-		     lexem->getLineNumber());
+		     token->getLineNumber());
 	get();
-	if (lextype == BEGIN)
+	if (tokenType == BEGIN)
 		body(poliz);
 	else
 		errx(EXIT_FAILURE, err_rbrace,
-		     lexem->getLineNumber());
+		     token->getLineNumber());
 }
 
 void Parser::
 dataType()
 {
-	if (lextype != DATA_TYPE)
-		errx(EXIT_FAILURE, err_dtype, lexem->getLineNumber());
-	dtype = lexem->getDataType();
+	if (tokenType != DATA_TYPE)
+		errx(EXIT_FAILURE, err_dtype, token->getLineNumber());
+	dtype = token->getDataType();
 }
 
 Poliz* Parser::
@@ -340,15 +340,15 @@ analyze()
 	Poliz *poliz = new Poliz;
 	for (;;) {
 		get();
-		if (lextype == LEX_NULL)
+		if (tokenType == TOKEN_NULL)
 			break;
 		dataType();
 		get();
-		if (lextype != IDENTIFIER)
+		if (tokenType != IDENTIFIER)
 			errx(EXIT_FAILURE, err_identifier,
-			     lexem->getLineNumber());
+			     token->getLineNumber());
 		get();
-		if (lextype == LPARENTHESIS)
+		if (tokenType == LPARENTHESIS)
 			function(poliz);
 		else
 			gvar(poliz);

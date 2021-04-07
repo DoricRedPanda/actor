@@ -1,5 +1,5 @@
                           Interpreter
           ____________________________________________________
 input --> | --> Lexer --------> Parser ----> interpret() --> | --> output
-          |          LexemList         Poliz                 |
+          |          TokenList         Poliz                 |
           ____________________________________________________

@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "lexem.h"
+#include "token.h"
 #include "list.h"
 #include "map.h"
 #include "stack.h"
@@ -19,13 +19,13 @@ struct Identifier {
 };
 
 class Parser {
-	LexemList &list;
+	TokenList &list;
 	Map<const char *, Identifier, strcmp> symbolTable;
 	Stack<DataType> typeStack;
 	Stack<OpType> opStack;
 
-	Lexem *lexem;
-	LexemType lextype;
+	Token *token;
+	TokenType tokenType;
 	const char *idname;
 	DataType dtype;
 
@@ -50,8 +50,8 @@ class Parser {
 	/* Poliz building */
 	void insertInstruction(Poliz *poliz, OpType type);
 public:
-	Parser(LexemList &list)
-		: list(list), typeStack(80), opStack(80) {}
+	Parser(TokenList *ptrList)
+		: list(*ptrList), typeStack(80), opStack(80) {}
 	Poliz* analyze();
 };
 
