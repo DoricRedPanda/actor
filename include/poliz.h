@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "stack.h"
-#include "vector.h"
+#include "list.h"
 
 typedef Stack<intptr_t> SStack;
 
@@ -36,7 +36,7 @@ public:
 };
 
 typedef GenericConstant<intptr_t> ConstInt;
-typedef GenericConstant<PolizItem*> Label;
+typedef GenericConstant<Node<PolizItem*>*> Label;
 
 class Variable: public PolizItem {
 	int value;
