@@ -6,5 +6,5 @@ int main()
 	goto SKIP;
 	counter = counter + 1;
 SKIP:
-	counter = counter + 1;
+	write counter;
 }
