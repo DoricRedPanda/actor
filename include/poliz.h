@@ -22,6 +22,11 @@ public:
 	void eval(SStack &stack, Poliz *ptrPoliz);
 };
 
+class PolizOpGoFalse: public PolizItem {
+public:
+	void eval(SStack &stack, Poliz *ptrPoliz);
+};
+
 class Constant: public PolizItem {
 protected:
 	Constant() {}
@@ -39,11 +44,12 @@ public:
 	void set(T v) { value = v; }
 	void eval(SStack &stack, Poliz *ptrPoliz)
 	{
-		stack.push((intptr_t) value);
+		stack.push(reinterpret_cast<intptr_t>(value));
 	}
 };
 
 typedef GenericConstant<intptr_t> ConstInt;
+typedef GenericConstant<void*> IntAddress;
 typedef GenericConstant<Node<PolizItem*>*> Label;
 
 class Variable: public PolizItem {
@@ -51,7 +57,7 @@ class Variable: public PolizItem {
 public:
 	Variable(int v) : value(v) {}
 	void eval(SStack &stack, Poliz *ptrPoliz) { stack.getLength(); }
-	void *getPointer() { return &value; }
+	void* getPointer() { return &value; }
 };
 
 class Instruction: public PolizItem {

@@ -10,6 +10,7 @@
 #include "poliz.h"
 
 typedef List<PolizItem*> Poliz;
+typedef Node<PolizItem*> PolizItemNode;
 
 struct Identifier {
 	const DataType type;
@@ -50,6 +51,8 @@ class Parser {
 	void binaryOperation(Poliz *poliz);
 	void unaryOperation();
 	void statementGoto(Poliz *poliz);
+	void branching(Poliz *poliz);
+	void cycle(Poliz *poliz);
 	/* semantic analyzer */
 	void declare(Poliz *poliz);
 	void declareLabel(Poliz *poliz);
@@ -57,6 +60,7 @@ class Parser {
 	void checkType();
 	void checkAssignment(Poliz *poliz);
 	void insertLabels();
+	void flushOperationStack(Poliz *poliz);
 	/* Poliz building */
 	void insertInstruction(Poliz *poliz, OpType type);
 public:

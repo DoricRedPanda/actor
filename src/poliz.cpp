@@ -11,6 +11,18 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	ptrPoliz->next();
 }
 
+void PolizOpGoFalse::
+eval(SStack &stack, Poliz *ptrPoliz)
+{
+	Node<PolizItem*> *pos =
+	    reinterpret_cast<Node<PolizItem*>*>(stack.pop());
+	intptr_t value = stack.pop();
+	if (!value) {
+		ptrPoliz->setPos(pos);
+		ptrPoliz->next();
+	}
+}
+
 void Inst_mov::
 eval(SStack &stack, Poliz *ptrPoliz)
 {

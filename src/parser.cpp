@@ -23,6 +23,7 @@ static const char err_identifier[] = "\t%d\t|\tIdentifier expected";
 static const char err_semicolon[] = "\t%d\t|\tSemicolon expected";
 static const char err_type[] = "\t%d\t|\tOperator requires matching types";
 static const char err_unary[] = "\t%d\t|\tUnary operation expected";
+static const char err_lparent[] = "\t%d\t|\t'(' expected";
 static const char err_rparent[] = "\t%d\t|\t')' expected";
 static const char err_expression[] = "\t%d\t|\tInvalid expression";
 static const char err_equal[] = "\t%d\t|\t'=' expected";
@@ -60,7 +61,7 @@ checkId(Poliz *poliz)
 	Identifier *identifier = symbolTable.find(idname);
 	if (identifier) {
 		typeStack.push(identifier->type);
-		poliz->insert(new ConstInt(reinterpret_cast<intptr_t>(identifier->ptr)));
+		poliz->insert(new IntAddress(identifier->ptr));
 	} else {
 		errx(EXIT_FAILURE, err_not_decl, token->getPos());
 	}
@@ -166,7 +167,7 @@ expressionArg(Poliz *poliz)
 }
 
 void Parser::
-expression(Poliz *poliz) /* TODO redesign */
+expression(Poliz *poliz)
 {
 	for (;;) {
 		get();
@@ -180,6 +181,12 @@ expression(Poliz *poliz) /* TODO redesign */
 			break;
 		binaryOperation(poliz);
 	}
+	flushOperationStack(poliz);
+}
+
+void Parser::
+flushOperationStack(Poliz *poliz)
+{
 	while (opStack.getLength()) {
 		OpType type;
 		type = opStack.pop();
@@ -193,14 +200,14 @@ expression(Poliz *poliz) /* TODO redesign */
 void Parser::
 statementGoto(Poliz *poliz)
 {
-	Node<PolizItem*> *addr;
+	PolizItemNode *addr;
 	get();
 	int pos = token->getPos();
 	if (tokenType != IDENTIFIER)
 		errx(EXIT_FAILURE, err_identifier, pos);
 	Identifier *ident = symbolTable.find(idname);
 	if (ident) {
-		addr = static_cast<Node<PolizItem*>*>(ident->ptr);
+		addr = static_cast<PolizItemNode*>(ident->ptr);
 		poliz->insert(new Label(addr));
 	} else {
 		Label *label = new Label(NULL);
@@ -214,12 +221,57 @@ statementGoto(Poliz *poliz)
 }
 
 void Parser::
+branching(Poliz *poliz)
+{
+	get();
+	if (tokenType != LPARENTHESIS)
+		errx(EXIT_FAILURE, err_lparent, token->getPos());
+	expression(poliz);
+	if (tokenType != RPARENTHESIS)
+		errx(EXIT_FAILURE, err_rparent, token->getPos());
+	Label *label = new Label(NULL);
+	poliz->insert(label);
+	poliz->insert(new PolizOpGoFalse);
+	get();
+	statement(poliz);
+	PolizItemNode *addr = poliz->getTail();
+	label->set(addr);
+}
+
+void Parser::
+cycle(Poliz *poliz)
+{
+	PolizItemNode *start = poliz->getTail();
+	get();
+	if (tokenType != LPARENTHESIS)
+		errx(EXIT_FAILURE, err_lparent, token->getPos());
+	expression(poliz);
+	if (tokenType != RPARENTHESIS)
+		errx(EXIT_FAILURE, err_rparent, token->getPos());
+	Label *labelFinish = new Label(NULL);
+	poliz->insert(labelFinish);
+	poliz->insert(new PolizOpGoFalse);
+	get();
+	statement(poliz);
+	poliz->insert(new Label(start));
+	poliz->insert(new PolizOpGo);
+	PolizItemNode *finish = poliz->getTail();
+	labelFinish->set(finish);
+}
+
+void Parser::
 keyword(Poliz *poliz)
 {
 	StatementType type = token->getStatementType();
 	switch (type) {
 	case GOTO:
 		statementGoto(poliz);
+		break;
+	case IF:
+		branching(poliz);
+		break;
+	case WHILE:
+		cycle(poliz);
 		break;
 	default:
 		errx(EXIT_FAILURE, err_implementation, token->getPos());
@@ -230,7 +282,7 @@ void Parser::
 declareLabel(Poliz *poliz)
 {
 	int res;
-	Node<PolizItem*>* addr = poliz->getTail();
+	PolizItemNode *addr = poliz->getTail();
 	Identifier ident(LABEL, addr);
 	res = symbolTable.insert(idname, ident);
 	if (res < 0)
@@ -240,14 +292,15 @@ declareLabel(Poliz *poliz)
 void Parser::
 statement(Poliz *poliz)
 {
-ST:	if (tokenType == SEMICOLON)
+	if (tokenType == SEMICOLON)
 		return;
 	if (tokenType == IDENTIFIER) {
 		get();
 		if (tokenType == TWO_SPOT) {
 			declareLabel(poliz);
 			get();
-			goto ST;
+			statement(poliz);
+			return;
 		}
 		if (tokenType != EQUALSIGN)
 			errx(EXIT_FAILURE, err_equal, token->getPos());
@@ -307,8 +360,8 @@ insertLabels()
 		Identifier *ident = symbolTable.find(item.id);
 		if (!ident)
 			errx(EXIT_FAILURE, err_label, item.line);
-		Node<PolizItem*> *addr;
-		addr = static_cast<Node<PolizItem*>*>(ident->ptr);
+		PolizItemNode *addr;
+		addr = static_cast<PolizItemNode*>(ident->ptr);
 		item.label->set(addr);
 	}
 }
