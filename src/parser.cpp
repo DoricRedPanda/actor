@@ -35,12 +35,20 @@ static const char err_label[] = "\t%d\t|\tUndefined label";
 static const char err_bad_statement[] = "\t%d\t|\tStatement expected";
 
 void Parser::
-get()
+get() /* TODO: REDESIGN */
 {
 	token = list.next();
 	tokenType =  token->getType();
 	if (tokenType == IDENTIFIER)
 		idname = token->getIdentifier();
+}
+
+void Parser::
+expect(TokenType type, const char errmsg[])
+{
+	get();
+	if (tokenType != type)
+		errx(EXIT_FAILURE, errmsg, token->getPos());
 }
 
 void Parser::
@@ -102,20 +110,13 @@ binaryOperation(Poliz *poliz)
 void Parser::
 gvar(Poliz *poliz)
 {
-	for (;;) {
-		if (tokenType == COMMA) {
-			declare(poliz);
-			get();
-			if (tokenType != IDENTIFIER)
-				errx(EXIT_FAILURE, err_identifier,
-				     token->getPos());
-			get();
-			continue;
-		}
-		if (tokenType == SEMICOLON)
-			break;
-		errx(EXIT_FAILURE, err_semicolon, token->getPos());
+	while (tokenType == COMMA) {
+		declare(poliz);
+		expect(IDENTIFIER, err_identifier);
+		get();
 	}
+	if (tokenType != SEMICOLON)
+		errx(EXIT_FAILURE, err_semicolon, token->getPos());
 	declare(poliz);
 }
 
@@ -201,10 +202,8 @@ void Parser::
 statementGoto(Poliz *poliz)
 {
 	PolizItemNode *addr;
-	get();
+	expect(IDENTIFIER, err_identifier);
 	int pos = token->getPos();
-	if (tokenType != IDENTIFIER)
-		errx(EXIT_FAILURE, err_identifier, pos);
 	Identifier *ident = symbolTable.find(idname);
 	if (ident) {
 		addr = static_cast<PolizItemNode*>(ident->ptr);
@@ -215,17 +214,13 @@ statementGoto(Poliz *poliz)
 		labelStack.push(UndefinedLabel(idname, label, pos));
 	}
 	poliz->insert(new PolizOpGo);
-	get();
-	if (tokenType != SEMICOLON)
-		errx(EXIT_FAILURE, err_semicolon, token->getPos());
+	expect(SEMICOLON, err_semicolon);
 }
 
 void Parser::
 branching(Poliz *poliz)
 {
-	get();
-	if (tokenType != LPARENTHESIS)
-		errx(EXIT_FAILURE, err_lparent, token->getPos());
+	expect(LPARENTHESIS, err_lparent);
 	expression(poliz);
 	if (tokenType != RPARENTHESIS)
 		errx(EXIT_FAILURE, err_rparent, token->getPos());
@@ -242,9 +237,7 @@ void Parser::
 cycle(Poliz *poliz)
 {
 	PolizItemNode *start = poliz->getTail();
-	get();
-	if (tokenType != LPARENTHESIS)
-		errx(EXIT_FAILURE, err_lparent, token->getPos());
+	expect(LPARENTHESIS, err_lparent);
 	expression(poliz);
 	if (tokenType != RPARENTHESIS)
 		errx(EXIT_FAILURE, err_rparent, token->getPos());
@@ -334,14 +327,9 @@ body(Poliz *poliz)
 void Parser::
 function(Poliz *poliz)
 {
-	get();
-	if (tokenType != RPARENTHESIS)
-		errx(EXIT_FAILURE, err_rparent, token->getPos());
-	get();
-	if (tokenType == BEGIN)
-		body(poliz);
-	else
-		errx(EXIT_FAILURE, err_lbrace, token->getPos());
+	expect(RPARENTHESIS, err_rparent);
+	expect(BEGIN, err_lbrace);
+	body(poliz);
 }
 
 void Parser::
@@ -375,9 +363,7 @@ analyze()
 		if (tokenType == TOKEN_NULL)
 			break;
 		dataType();
-		get();
-		if (tokenType != IDENTIFIER)
-			errx(EXIT_FAILURE, err_identifier, token->getPos());
+		expect(IDENTIFIER, err_identifier);
 		get();
 		if (tokenType == LPARENTHESIS)
 			function(poliz);

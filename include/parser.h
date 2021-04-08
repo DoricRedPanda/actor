@@ -37,7 +37,9 @@ class Parser {
 	const char *idname;
 	DataType dtype;
 
+	/*utility*/
 	void get();
+	void expect(TokenType type, const char errmsg[]);
 	/* syntax analyzer */
 	void var(Poliz *poliz);
 	void gvar(Poliz *poliz);
