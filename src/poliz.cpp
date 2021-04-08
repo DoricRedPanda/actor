@@ -23,11 +23,17 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	}
 }
 
+void Inst_print::
+eval(SStack &stack, Poliz *ptrPoliz)
+{
+	intptr_t foo = stack.pop();
+	printf("%ld\n", foo);
+}
+
 void Inst_mov::
 eval(SStack &stack, Poliz *ptrPoliz)
 {
 	intptr_t bar = stack.pop();
-	printf("%ld\n", bar);
 	int *foo = reinterpret_cast<int*>(stack.pop());
 	*foo = bar;
 }

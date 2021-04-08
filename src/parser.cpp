@@ -253,6 +253,15 @@ cycle(Poliz *poliz)
 }
 
 void Parser::
+writing(Poliz *poliz)
+{
+	expression(poliz);
+	poliz->insert(new Inst_print);
+	if (tokenType != SEMICOLON)
+		errx(EXIT_FAILURE, err_semicolon, token->getPos());
+}
+
+void Parser::
 keyword(Poliz *poliz)
 {
 	StatementType type = token->getStatementType();
@@ -265,6 +274,9 @@ keyword(Poliz *poliz)
 		break;
 	case WHILE:
 		cycle(poliz);
+		break;
+	case WRITE:
+		writing(poliz);
 		break;
 	default:
 		errx(EXIT_FAILURE, err_implementation, token->getPos());

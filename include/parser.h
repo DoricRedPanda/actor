@@ -55,6 +55,7 @@ class Parser {
 	void statementGoto(Poliz *poliz);
 	void branching(Poliz *poliz);
 	void cycle(Poliz *poliz);
+	void writing(Poliz *poliz);
 	/* semantic analyzer */
 	void declare(Poliz *poliz);
 	void declareLabel(Poliz *poliz);

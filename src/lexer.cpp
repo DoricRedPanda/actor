@@ -4,7 +4,7 @@
 #include <string.h>
 #include "lexer.h"
 
-static const char delimiters[] = " \f\n\r\t\v{}[](),=:;";
+static const char delimiters[] = " \f\n\r\t\v{}[](),:;!*~-";
 
 static const char *lexSpecialSymbol[] = {
 	"{", "}",

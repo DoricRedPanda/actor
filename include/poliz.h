@@ -66,6 +66,11 @@ public:
 	~Instruction() {}
 };
 
+class Inst_print: public Instruction {
+public:
+	void eval(SStack &stack, Poliz *ptrPoliz);
+};
+
 class Inst_mov: public Instruction {
 public:
 	void eval(SStack &stack, Poliz *ptrPoliz);
