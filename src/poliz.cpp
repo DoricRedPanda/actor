@@ -24,14 +24,14 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_print::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t foo = stack.pop();
 	printf("%ld\n", foo);
 }
 
 void Inst_mov::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	int *foo = reinterpret_cast<int*>(stack.pop());
@@ -39,7 +39,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_or::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -47,7 +47,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_and::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -55,7 +55,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_bitor::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -63,7 +63,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_xor::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -71,7 +71,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_bitand::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -79,7 +79,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_eq::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -87,7 +87,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_neq::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -95,7 +95,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_leq::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -103,7 +103,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_lt::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -111,7 +111,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_geq::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -119,7 +119,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_gt::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -127,7 +127,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_shl::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -135,7 +135,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_shr::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -143,7 +143,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_add::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -152,7 +152,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_sub::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -161,7 +161,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_mul::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -170,7 +170,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_div::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -181,7 +181,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_mod::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
@@ -192,28 +192,28 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 void Inst_not::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t foo = stack.pop();
 	stack.push(!foo);
 }
 
 void Inst_bitnot::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t foo = stack.pop();
 	stack.push(~foo);
 }
 
 void Inst_neg::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	intptr_t foo = stack.pop();
 	stack.push(-foo);
 }
 
 void Inst_dereference::
-eval(SStack &stack, Poliz *ptrPoliz)
+eval(SStack &stack)
 {
 	int *foo = reinterpret_cast<int*>(stack.pop());
 	stack.push(*foo);
