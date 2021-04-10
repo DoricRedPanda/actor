@@ -228,13 +228,25 @@ branching(Poliz *poliz)
 	expect(LPARENTHESIS, err_lparent);
 	expression(poliz);
 	expect(RPARENTHESIS, err_rparent);
-	Label *label = new Label(NULL);
-	poliz->insert(label);
+	Label *labelFalse = new Label(NULL);
+	poliz->insert(labelFalse);
 	poliz->insert(new PolizOpGoFalse);
-	get();
 	statement(poliz);
-	PolizItemNode *addr = poliz->getTail();
-	label->set(addr);
+	get();
+	if (tokenType == STATEMENT && token->getStatementType() == ELSE) {
+		Label *labelTrue = new Label(NULL);
+		poliz->insert(labelTrue);
+		poliz->insert(new PolizOpGo);
+		PolizItemNode *addr = poliz->getTail();
+		labelFalse->set(addr);
+		statement(poliz);
+		addr = poliz->getTail();
+		labelTrue->set(addr);
+	} else {
+		PolizItemNode *addr = poliz->getTail();
+		labelFalse->set(addr);
+		isSkippingNextGet = true;
+	}
 }
 
 void Parser::
@@ -247,7 +259,6 @@ cycle(Poliz *poliz)
 	Label *labelFinish = new Label(NULL);
 	poliz->insert(labelFinish);
 	poliz->insert(new PolizOpGoFalse);
-	get();
 	statement(poliz);
 	poliz->insert(new Label(start));
 	poliz->insert(new PolizOpGo);
@@ -299,13 +310,13 @@ declareLabel(Poliz *poliz)
 void Parser::
 statement(Poliz *poliz)
 {
+	get();
 	if (tokenType == SEMICOLON)
 		return;
 	if (tokenType == IDENTIFIER) {
 		get();
 		if (tokenType == TWO_SPOT) {
 			declareLabel(poliz);
-			get();
 			statement(poliz);
 			return;
 		}
@@ -333,6 +344,7 @@ body(Poliz *poliz)
 			break;
 		if (tokenType == TOKEN_NULL)
 			errx(EXIT_FAILURE, err_not_closed, token->getPos());
+		isSkippingNextGet = true;
 		statement(poliz);
 	}
 }

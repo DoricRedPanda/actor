@@ -9,4 +9,8 @@ int main()
 	if (counter)
 		counter = 42;
 	write counter;
+	if (!counter)
+		;
+	else
+		write counter;
 }
