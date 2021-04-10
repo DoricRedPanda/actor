@@ -35,8 +35,12 @@ static const char err_label[] = "\t%d\t|\tUndefined label";
 static const char err_bad_statement[] = "\t%d\t|\tStatement expected";
 
 void Parser::
-get() /* TODO: REDESIGN */
+get()
 {
+	if (isSkippingNextGet) {
+		isSkippingNextGet = false;
+		return;
+	}
 	token = list.next();
 	tokenType =  token->getType();
 	if (tokenType == IDENTIFIER)
@@ -183,6 +187,7 @@ expression(Poliz *poliz)
 		binaryOperation(poliz);
 	}
 	flushOperationStack(poliz);
+	isSkippingNextGet = true;
 }
 
 void Parser::
@@ -222,8 +227,7 @@ branching(Poliz *poliz)
 {
 	expect(LPARENTHESIS, err_lparent);
 	expression(poliz);
-	if (tokenType != RPARENTHESIS)
-		errx(EXIT_FAILURE, err_rparent, token->getPos());
+	expect(RPARENTHESIS, err_rparent);
 	Label *label = new Label(NULL);
 	poliz->insert(label);
 	poliz->insert(new PolizOpGoFalse);
@@ -239,8 +243,7 @@ cycle(Poliz *poliz)
 	PolizItemNode *start = poliz->getTail();
 	expect(LPARENTHESIS, err_lparent);
 	expression(poliz);
-	if (tokenType != RPARENTHESIS)
-		errx(EXIT_FAILURE, err_rparent, token->getPos());
+	expect(RPARENTHESIS, err_rparent);
 	Label *labelFinish = new Label(NULL);
 	poliz->insert(labelFinish);
 	poliz->insert(new PolizOpGoFalse);
@@ -256,9 +259,8 @@ void Parser::
 writing(Poliz *poliz)
 {
 	expression(poliz);
+	expect(SEMICOLON, err_semicolon);
 	poliz->insert(new Inst_print);
-	if (tokenType != SEMICOLON)
-		errx(EXIT_FAILURE, err_semicolon, token->getPos());
 }
 
 void Parser::
@@ -311,9 +313,8 @@ statement(Poliz *poliz)
 			errx(EXIT_FAILURE, err_equal, token->getPos());
 		checkId(poliz);
 		expression(poliz);
+		expect(SEMICOLON, err_semicolon);
 		checkAssignment(poliz);
-		if (tokenType != SEMICOLON)
-			errx(EXIT_FAILURE, err_semicolon, token->getPos());
 	} else if (tokenType == STATEMENT) {
 		keyword(poliz);
 	} else if (tokenType == BEGIN) {

@@ -36,6 +36,7 @@ class Parser {
 	TokenType tokenType;
 	const char *idname;
 	DataType dtype;
+	bool isSkippingNextGet;
 
 	/*utility*/
 	void get();
@@ -69,7 +70,8 @@ class Parser {
 public:
 	Parser(TokenList *ptrList)
 	    : list(*ptrList), typeStack(80),
-	      opStack(80), labelStack(80) {}
+	      opStack(80), labelStack(80),
+	      isSkippingNextGet(false) {}
 	Poliz* analyze();
 };
 
