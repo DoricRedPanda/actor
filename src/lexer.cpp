@@ -17,7 +17,7 @@ static const char *lexSpecialSymbol[] = {
 	NULL
 };
 
-static const char *lexDataType[] = {
+static const char *lexBaseType[] = {
 	"int",
 	NULL
 };
@@ -130,9 +130,9 @@ word(TokenList *list)
 		list->insert(Token(line, static_cast<StatementType>(type)));
 		return;
 	}
-	type = look(lexDataType);
+	type = look(lexBaseType);
 	if (type >= 0) {
-		list->insert(Token(line, static_cast<DataType>(type)));
+		list->insert(Token(line, static_cast<BaseType>(type)));
 		return;
 	}
 	list->insert(Token(line, buf));

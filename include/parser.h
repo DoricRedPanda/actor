@@ -13,10 +13,15 @@ typedef List<PolizItem*> Poliz;
 typedef Node<PolizItem*> PolizItemNode;
 
 struct Identifier {
-	const DataType type;
+	const BaseType type;
 	void *ptr;
-	Identifier(DataType type, void *ptr)
+	Identifier(BaseType type, void *ptr)
 		: type(type), ptr(ptr) {}
+};
+
+struct DataType {
+	BaseType type;
+	DataType *ptr;
 };
 
 class Parser {
@@ -29,13 +34,13 @@ class Parser {
 	};
 	TokenList &list;
 	Map<const char *, Identifier, strcmp> symbolTable;
-	Stack<DataType> typeStack;
+	Stack<BaseType> typeStack;
 	Stack<OpType> opStack;
 	Stack<UndefinedLabel> labelStack;
 	Token *token;
 	TokenType tokenType;
 	const char *idname;
-	DataType dtype;
+	BaseType dtype;
 	bool isSkippingNextGet;
 
 	/*utility*/

@@ -32,6 +32,7 @@ static const char err_not_closed[] = "\t%d\t|\tBlock not closed";
 static const char err_dtype[] = "\t%d\t|\tData type expected";
 static const char err_implementation[] = "\t%d\t|\tNot implemented";
 static const char err_label[] = "\t%d\t|\tUndefined label";
+static const char err_comma[] = "\t%d\t|\t',' expected";
 static const char err_bad_statement[] = "\t%d\t|\tStatement expected";
 
 void Parser::
@@ -90,7 +91,7 @@ checkAssignment(Poliz *poliz)
 void Parser::
 checkType()
 {
-	DataType foo, bar;
+	BaseType foo, bar;
 	bar = typeStack.pop();
 	foo = typeStack.pop();
 	if (foo == bar)
@@ -114,14 +115,15 @@ binaryOperation(Poliz *poliz)
 void Parser::
 gvar(Poliz *poliz)
 {
-	while (tokenType == COMMA) {
+	for (;;) {
 		declare(poliz);
+		if (tokenType == SEMICOLON)
+			break;
+		if (tokenType != COMMA)
+			errx(EXIT_FAILURE, err_comma, token->getPos());
 		expect(IDENTIFIER, err_identifier);
 		get();
 	}
-	if (tokenType != SEMICOLON)
-		errx(EXIT_FAILURE, err_semicolon, token->getPos());
-	declare(poliz);
 }
 
 void Parser::
@@ -362,7 +364,7 @@ dataType()
 {
 	if (tokenType != DATA_TYPE)
 		errx(EXIT_FAILURE, err_dtype, token->getPos());
-	dtype = token->getDataType();
+	dtype = token->getBaseType();
 }
 
 void Parser::

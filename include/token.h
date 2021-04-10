@@ -20,9 +20,10 @@ enum TokenType {
 	OPERATOR
 };
 
-enum DataType {
+enum BaseType {
 	INT,
-	LABEL
+	LABEL,
+	POINTER
 };
 
 enum OpType {
@@ -58,13 +59,13 @@ class Token {
 	int line;
 	union Value {
 		const OpType optype;
-		const DataType dtype;
+		const BaseType dtype;
 		const StatementType stype;
 		const int v_int;
 		const char *id;
 		Value() {}
 		Value(OpType op) : optype(op) {}
-		Value(DataType dtype) : dtype(dtype) {}
+		Value(BaseType dtype) : dtype(dtype) {}
 		Value(StatementType stype) : stype(stype) {}
 		Value(int i) : v_int(i) {}
 		Value(const char *id) : id(id) {}
@@ -100,7 +101,7 @@ public:
 	Token(int line, StatementType stype)
 		: type(STATEMENT), line(line), value(stype) {}
 
-	Token(int line, DataType dtype)
+	Token(int line, BaseType dtype)
 		: type(DATA_TYPE), line(line), value(dtype) {}
 
 	~Token()
@@ -112,7 +113,7 @@ public:
 	TokenType getType() const { return type; }
 	int getPos() const { return line; }
 	const char *getIdentifier() const { return value.id; }
-	DataType getDataType() const { return value.dtype; }
+	BaseType getBaseType() const { return value.dtype; }
 	StatementType getStatementType() const { return value.stype; }
 	int getInt() const { return value.v_int; }
 	OpType getOpType() const { return value.optype; }
