@@ -21,6 +21,7 @@ class Lexer {
 	void end() { buf[pos] = '\0'; }
 	void clear() { pos = 0; }
 	int look(const char *table[]) const;
+	void comments();
 
 	/* Following functions represent states of DFA.
 	 * On success lexem is added to the list.
@@ -33,7 +34,7 @@ class Lexer {
 	void punctuation(TokenList *list);
 public:
 	Lexer(FILE *file)
-		: file(file), pos(0), line(0) {}
+		: file(file), pos(0), line(1) {}
 	TokenList* analyze();
 };
 

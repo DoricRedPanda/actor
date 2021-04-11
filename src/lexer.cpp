@@ -51,7 +51,8 @@ static const char err_wordlen[] = "\t%d\t|\tWord is too long";
 static const char err_int_suffix[] = "\t%d\t|\tInvalid suffix on integer constant";
 static const char err_invalid_char[] = "\t%d\t|\tUnexpected character %c";
 static const char err_op_suffix[] = "\t%d\t|\tInvalid suffix on operation";
-static const char err_invalid_op[] = "\t%d\t|\tUnrecognized operator";
+static const char err_invalid_op[] = "\t%d\t|\t Bad lexeme. Unrecognized operator";
+static const char err_eof[] = "\t%d\t|\tUnexpected end of file";
 static const char err_unreachable[] = "\t%d\t|\tLexical analyzer state should be unreachable!";
 
 
@@ -139,6 +140,28 @@ word(TokenList *list)
 }
 
 void Lexer::
+comments()
+{
+	if (ch != '*')
+		return;
+	if (buf[pos - 1] != '/')
+		return;
+	buf[pos - 1] = '\0';
+	bool flag = false;
+	for (;;) {
+		get();
+		if (ch == '\n')
+			line++;
+		else if (flag && ch == '/')
+			break;
+		else if (ch == EOF)
+			errx(EXIT_FAILURE, err_eof, line);
+		flag = ch == '*';
+	}
+	get();
+}
+
+void Lexer::
 punctuation(TokenList *list)
 {
 	int type;
@@ -146,8 +169,11 @@ punctuation(TokenList *list)
 		push();
 		get();
 	} while(ispunct(ch) && !strchr(delimiters, ch));
-	unget();
 	end();
+	comments();
+	unget();
+	if (buf[0] == '\0')
+		return;
 	type = look(lexOperation);
 	if (type >= 0) {
 		list->insert(Token(line, static_cast<OpType>(type)));
