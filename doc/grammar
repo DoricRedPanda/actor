@@ -1,0 +1,50 @@
+Lexemes:
+
+S -> space | <INTEGER> | <SIGN> | alpha<WORD> | <PUNCTUATION>
+SIGN -> '+' | '-' | '+'<NUMBER> | '-'<NUMBER>
+INTEGER -> digit | digit<INTEGER> | '.'<FLOAT>
+FLOAT -> digit | digit<FLOAT>
+WORD -> alnum | alnum<WORD> | ':'
+(WORD is a statement, or a basic data type, or an identifier, or a label)
+PUNCTUATION -> punct | punct<PUNCTUATION>
+(PUNCTUATION is either operation or special symbol. )
+
+space, alpha, alnum, digit, punct are defined as described in manpage for
+isalpha (3).
+Lexemes for statements, base data types, operations, special symbols are written
+in file "src/lexer.cpp". Token codes corresponding to lexemes are written in
+file "include/token.h".
+WARNING: Floating point calculations are not implemented yet!
+
+Syntax:
+
+S -> <UNIT>
+
+UNIT -> <GLOBAL_VARIABLE> | <FUNCTION>
+
+GLOBAL_VARIABLE -> 'DATA_TYPE' 'IDENTIFIER' {',' 'IDENTIFIER'}* ';'
+
+FUNCTION -> 'DATA_TYPE' 'IDENTIFIER' '(' ')' <BODY>
+
+BODY -> '{' {<STATEMENT>}* '}'
+
+STATEMENT -> ';' | <BODY> | <ASSIGNMENT> | <KEYWORD>
+
+KEYWORD -> 'if' '(' <EXPRESSION> ')' <STATEMENT> |
+           'if' '(' <EXPRESSION> ')' <STATEMENT> 'else' <STATEMENT> |
+           'while' '(' <EXPRESSION> ')' <STATEMENT> |
+           'goto' 'LABEL' ';' |
+	   'write' <EXPRESSION> ';'
+
+ASSIGNMENT -> <VARIABLE> '=' <EXPRESSION> ';'
+
+EXPRESSION -> <EXPRESSION_ARG> { ' BINARY OPERATION' <EXPRESSION_ARG> }*
+
+EXPRESSION_ARG -> 'UNARY OPERATION' <EXPRESSION_ARG> |
+                  'CONST_INTEGER' |
+		  <VARIABLE> |
+                  '(' <EXPRESSION> ')'
+
+VARIABLE -> 'IDENTIFIER' | 'IDENTIFIER' '[' <EXPRESSION> ']'
+
+WARNING: Syntax is still in developpment
