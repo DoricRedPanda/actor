@@ -10,14 +10,14 @@ enum TokenType {
 	LPARENTHESIS, RPARENTHESIS,
 	COMMA,
 	EQUALSIGN,
-	TWO_SPOT,
 	SEMICOLON,
 	TOKEN_NULL,
 	DATA_TYPE,
 	CONST_INT,
 	STATEMENT,
 	IDENTIFIER,
-	OPERATOR
+	OPERATOR,
+	LABEL_DEF
 };
 
 enum BaseType {
@@ -82,15 +82,15 @@ public:
 	Token(const Token &t)
 		: type(t.type), line(t.line), value(t.value)
 	{
-		if (type == IDENTIFIER)
+		if (type == IDENTIFIER || type == LABEL_DEF)
 			value.id = dupIdentifier(t.value.id);
 	}
 
 	Token(int line, TokenType type)
 		: type(type), line(line) {}
 
-	Token(int line, const char *id)
-		: type(IDENTIFIER), line(line), value(dupIdentifier(id)) {}
+	Token(int line, TokenType type, const char *id)
+		: type(type), line(line), value(dupIdentifier(id)) {}
 
 	Token(int line, OpType optype)
 		: type(OPERATOR), line(line), value(optype) {}
@@ -106,7 +106,7 @@ public:
 
 	~Token()
 	{
-		if (type == IDENTIFIER)
+		if (type == IDENTIFIER || type == LABEL_DEF)
 			delete [] value.id;
 	}
 

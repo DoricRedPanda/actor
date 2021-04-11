@@ -31,8 +31,9 @@ static const char err_lbrace[] = "\t%d\t|\t'{' expected";
 static const char err_not_closed[] = "\t%d\t|\tBlock not closed";
 static const char err_dtype[] = "\t%d\t|\tData type expected";
 static const char err_implementation[] = "\t%d\t|\tNot implemented";
-static const char err_label[] = "\t%d\t|\tUndefined label";
+static const char err_undefined_label[] = "\t%d\t|\tUndefined label";
 static const char err_comma[] = "\t%d\t|\t',' expected";
+static const char err_ident_not_label[] = "\t%d\t|\tgoto expects label";
 static const char err_bad_statement[] = "\t%d\t|\tStatement expected";
 
 void Parser::
@@ -213,6 +214,8 @@ statementGoto(Poliz *poliz)
 	int pos = token->getPos();
 	Identifier *ident = symbolTable.find(idname);
 	if (ident) {
+		if (ident->type != LABEL)
+			errx(EXIT_FAILURE, err_ident_not_label, pos);
 		addr = static_cast<PolizItemNode*>(ident->ptr);
 		poliz->insert(new Label(addr));
 	} else {
@@ -304,35 +307,44 @@ declareLabel(Poliz *poliz)
 	int res;
 	PolizItemNode *addr = poliz->getTail();
 	Identifier ident(LABEL, addr);
-	res = symbolTable.insert(idname, ident);
+	res = symbolTable.insert(token->getIdentifier(), ident);
 	if (res < 0)
 		errx(EXIT_FAILURE, err_rep_decl, token->getPos());
+}
+
+void Parser::
+assignment(Poliz *poliz)
+{
+	get();
+	if (tokenType != EQUALSIGN)
+		errx(EXIT_FAILURE, err_equal, token->getPos());
+	checkId(poliz);
+	expression(poliz);
+	expect(SEMICOLON, err_semicolon);
+	checkAssignment(poliz);
 }
 
 void Parser::
 statement(Poliz *poliz)
 {
 	get();
-	if (tokenType == SEMICOLON)
-		return;
-	if (tokenType == IDENTIFIER) {
-		get();
-		if (tokenType == TWO_SPOT) {
-			declareLabel(poliz);
-			statement(poliz);
-			return;
-		}
-		if (tokenType != EQUALSIGN)
-			errx(EXIT_FAILURE, err_equal, token->getPos());
-		checkId(poliz);
-		expression(poliz);
-		expect(SEMICOLON, err_semicolon);
-		checkAssignment(poliz);
-	} else if (tokenType == STATEMENT) {
+	switch (tokenType) {
+	case SEMICOLON:
+		break;
+	case LABEL_DEF:
+		declareLabel(poliz);
+		statement(poliz);
+		break;
+	case IDENTIFIER:
+		assignment(poliz);
+		break;
+	case STATEMENT:
 		keyword(poliz);
-	} else if (tokenType == BEGIN) {
+		break;
+	case BEGIN:
 		body(poliz);
-	} else {
+		break;
+	default:
 		errx(EXIT_FAILURE, err_bad_statement, token->getPos());
 	}
 }
@@ -374,7 +386,9 @@ insertLabels()
 		UndefinedLabel item = labelStack.pop();
 		Identifier *ident = symbolTable.find(item.id);
 		if (!ident)
-			errx(EXIT_FAILURE, err_label, item.line);
+			errx(EXIT_FAILURE, err_undefined_label, item.line);
+		if (ident->type != LABEL)
+			errx(EXIT_FAILURE, err_ident_not_label, item.line);
 		PolizItemNode *addr;
 		addr = static_cast<PolizItemNode*>(ident->ptr);
 		item.label->set(addr);

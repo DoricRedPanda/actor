@@ -12,7 +12,6 @@ static const char *lexSpecialSymbol[] = {
 	"(", ")",
 	",",
 	"=",
-	":",
 	";",
 	NULL
 };
@@ -136,7 +135,13 @@ word(TokenList *list)
 		list->insert(Token(line, static_cast<BaseType>(type)));
 		return;
 	}
-	list->insert(Token(line, buf));
+	if (ch == ':') {
+		list->insert(Token(line, LABEL_DEF, buf));
+		get();
+	} else {
+		list->insert(Token(line, IDENTIFIER, buf));
+	}
+
 }
 
 void Lexer::

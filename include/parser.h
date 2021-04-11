@@ -52,6 +52,7 @@ class Parser {
 	void dataType();
 	void body(Poliz *poliz);
 	void statement(Poliz *poliz);
+	void assignment(Poliz *poliz);
 	void keyword(Poliz *poliz);
 	void expression(Poliz *poliz);
 	void expressionArg(Poliz *poliz);
