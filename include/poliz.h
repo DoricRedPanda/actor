@@ -16,6 +16,7 @@ public:
 };
 
 typedef List<PolizItem*> Poliz;
+typedef List<PolizItem*>::Node<PolizItem*> PolizItemNode;
 
 class PolizOpGo: public PolizItem {
 public:
@@ -53,7 +54,7 @@ public:
 
 typedef GenericConstant<intptr_t> ConstInt;
 typedef GenericConstant<void*> IntAddress;
-typedef GenericConstant<Node<PolizItem*>*> Label;
+typedef GenericConstant<PolizItemNode*> Label;
 
 class Variable: public Instruction {
 	int value;

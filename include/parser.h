@@ -10,7 +10,6 @@
 #include "poliz.h"
 
 typedef List<PolizItem*> Poliz;
-typedef Node<PolizItem*> PolizItemNode;
 
 struct Identifier {
 	const BaseType type;

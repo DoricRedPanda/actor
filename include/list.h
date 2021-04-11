@@ -3,26 +3,28 @@
 
 #include <stddef.h>
 
-template<class Type> struct Node {
-	Type item;
-	Node *next;
-	Node(const Type &item) : item(item), next(NULL) {}
-};
-
-template<class Type> struct Node<Type*> {
-private:
-	Node(const Node &lnode);
-public:
-	Type *item;
-	Node *next;
-	Node(Type *item) : item(item), next(NULL) {}
-	~Node() { delete item; }
-};
-
 template<class T> class List {
+public:
+	template<class Type> struct Node {
+		Type item;
+		Node *next;
+		Node(const Type &item) : item(item), next(NULL) {}
+	};
+
+	template<class Type> struct Node<Type*> {
+	private:
+		Node(const Node &lnode);
+	public:
+		Type *item;
+		Node *next;
+		Node(Type *item) : item(item), next(NULL) {}
+		~Node() { delete item; }
+	};
+private:
 	Node<T> *head;
 	Node<T> *cur;
 	Node<T> *tail;
+
 public:
 	List() : head(NULL), cur(NULL), tail(NULL) {}
 	~List() { clear(); }

@@ -5,8 +5,8 @@
 void PolizOpGo::
 eval(SStack &stack, Poliz *ptrPoliz)
 {
-	Node<PolizItem*> *pos =
-	    reinterpret_cast<Node<PolizItem*>*>(stack.pop());
+	PolizItemNode *pos =
+	    reinterpret_cast<PolizItemNode*>(stack.pop());
 	ptrPoliz->setPos(pos);
 	ptrPoliz->next();
 }
@@ -14,8 +14,8 @@ eval(SStack &stack, Poliz *ptrPoliz)
 void PolizOpGoFalse::
 eval(SStack &stack, Poliz *ptrPoliz)
 {
-	Node<PolizItem*> *pos =
-	    reinterpret_cast<Node<PolizItem*>*>(stack.pop());
+	PolizItemNode *pos =
+	    reinterpret_cast<PolizItemNode*>(stack.pop());
 	intptr_t value = stack.pop();
 	if (!value) {
 		ptrPoliz->setPos(pos);
