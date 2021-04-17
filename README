@@ -9,6 +9,10 @@
 
 Interpreter for C-like language.
 
+Features
+--------
+*) STL-free code
+
 Build
 -----
 Run:
