@@ -211,8 +211,7 @@ expressionArg(Poliz *poliz)
 		poliz->insert(new Inst_dereference());
 	} else if (tokenType == LPARENTHESIS) {
 		expression(poliz);
-		if (tokenType != RPARENTHESIS)
-			errx(EXIT_FAILURE, err_rparent, token->getPos());
+		expect(RPARENTHESIS, err_rparent);
 	} else {
 		errx(EXIT_FAILURE, err_expression, token->getPos());
 	}
@@ -359,9 +358,7 @@ void Parser::
 assignment(Poliz *poliz)
 {
 	checkId(poliz);
-	get();
-	if (tokenType != EQUALSIGN)
-		errx(EXIT_FAILURE, err_equal, token->getPos());
+	expect(EQUALSIGN, err_equal);
 	expression(poliz);
 	expect(SEMICOLON, err_semicolon);
 	checkAssignment(poliz);
