@@ -11,16 +11,29 @@
 
 typedef List<PolizItem*> Poliz;
 
-struct Identifier {
-	const BaseType type;
-	void *ptr;
-	Identifier(BaseType type, void *ptr)
-		: type(type), ptr(ptr) {}
+struct DataType {
+	BaseType bt;
+	DataType *ptr;
+	size_t size;
+
+	DataType(BaseType bt)
+	    : bt(bt), ptr(NULL), size(sizeof(int)) {}
+	DataType(DataType *ptr)
+	    : bt(POINTER), ptr(ptr), size(sizeof(intptr_t)) {}
+	DataType(DataType *ptr, size_t size)
+	    : bt(ARRAY), ptr(ptr), size(size) {}
+	~DataType() { delete ptr; }
+
+	size_t getSize();
 };
 
-struct DataType {
-	BaseType type;
-	DataType *ptr;
+struct Identifier {
+	DataType *type;
+	void *ptr;
+	Identifier(DataType *type, void *ptr)
+	    : type(type), ptr(ptr) {}
+	~Identifier() { delete type; }
+	bool checkType(BaseType bt) const;
 };
 
 class Parser {
@@ -32,9 +45,8 @@ class Parser {
 		    : id(id), label(label), line(line) {}
 	};
 	TokenList &list;
-	Map<const char *, Identifier, strcmp> symbolTable;
+	Map<const char*, Identifier, strcmp> symbolTable;
 	Stack<BaseType> typeStack;
-	Stack<OpType> opStack;
 	Stack<UndefinedLabel> labelStack;
 	Token *token;
 	TokenType tokenType;
@@ -56,26 +68,26 @@ class Parser {
 	void keyword(Poliz *poliz);
 	void expression(Poliz *poliz);
 	void expressionArg(Poliz *poliz);
-	void binaryOperation(Poliz *poliz);
-	void unaryOperation();
+	void binaryOperation(Poliz *poliz, Stack<OpType> &opStack);
+	void unaryOperation(Stack<OpType> &opStack);
 	void statementGoto(Poliz *poliz);
 	void branching(Poliz *poliz);
 	void cycle(Poliz *poliz);
 	void writing(Poliz *poliz);
 	/* semantic analyzer */
-	void declare(Poliz *poliz);
+	void declare(Poliz *poliz, DataType *type);
 	void declareLabel(Poliz *poliz);
 	void checkId(Poliz *poliz);
 	void checkType();
 	void checkAssignment(Poliz *poliz);
 	void insertLabels();
-	void flushOperationStack(Poliz *poliz);
+	void flushOperationStack(Poliz *poliz, Stack<OpType> &opStack);
 	/* Poliz building */
 	void insertInstruction(Poliz *poliz, OpType type);
 public:
 	Parser(TokenList *ptrList)
 	    : list(*ptrList), typeStack(80),
-	      opStack(80), labelStack(80),
+	      labelStack(80),
 	      isSkippingNextGet(false) {}
 	Poliz* analyze();
 };

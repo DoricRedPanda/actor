@@ -16,7 +16,7 @@ static const int precedence[] = {
 	2, 2
 };
 
-static const char err_rep_decl[] = "\t%d\t|\tIdentifier is already declared";
+static const char err_rep_decl[] = "\t%d\t|\tBad declaration";
 static const char err_not_decl[] = "\t%d\t|\tNot declared";
 static const char err_type_assign[] = "\t%d\t|\tAssignment requires matching types";
 static const char err_identifier[] = "\t%d\t|\tIdentifier expected";
@@ -25,6 +25,8 @@ static const char err_type[] = "\t%d\t|\tOperator requires matching types";
 static const char err_unary[] = "\t%d\t|\tUnary operation expected";
 static const char err_lparent[] = "\t%d\t|\t'(' expected";
 static const char err_rparent[] = "\t%d\t|\t')' expected";
+static const char err_lbracket[] = "\t%d\t|\t'[' expected";
+static const char err_rbracket[] = "\t%d\t|\t']' expected";
 static const char err_expression[] = "\t%d\t|\tInvalid expression";
 static const char err_equal[] = "\t%d\t|\t'=' expected";
 static const char err_lbrace[] = "\t%d\t|\t'{' expected";
@@ -35,6 +37,24 @@ static const char err_undefined_label[] = "\t%d\t|\tUndefined label";
 static const char err_comma[] = "\t%d\t|\t',' expected";
 static const char err_ident_not_label[] = "\t%d\t|\tgoto expects label";
 static const char err_bad_statement[] = "\t%d\t|\tStatement expected";
+static const char err_integer[] = "\t%d\t|\tInteger number expected";
+
+size_t DataType::
+getSize()
+{
+	switch (bt) {
+	case ARRAY:
+		return size * ptr->getSize();
+	default:
+		return size;
+	}
+}
+
+bool Identifier::
+checkType(BaseType bt) const
+{
+	return type->bt == bt;
+}
 
 void Parser::
 get()
@@ -58,13 +78,21 @@ expect(TokenType type, const char errmsg[])
 }
 
 void Parser::
-declare(Poliz *poliz)
+declare(Poliz *poliz, DataType *type)
 {
-	int res;
-	Variable *v = new Variable(0);
-	poliz->insert(v);
-	Identifier ident(dtype, v->getPointer());
-	res = symbolTable.insert(idname, ident);
+	int res = -1;
+	Identifier *ident;
+	if (type->bt == ARRAY) {
+		Array *arr = new Array(type->getSize());
+		poliz->insert(arr);
+		ident = new Identifier(type, arr->getPointer());
+		res = symbolTable.insert(idname, ident);
+	} else if (type->bt == INT) {
+		Variable *v = new Variable(0);
+		poliz->insert(v);
+		ident = new Identifier(type, v->getPointer());
+		res = symbolTable.insert(idname, ident);
+	}
 	if (res < 0)
 		errx(EXIT_FAILURE, err_rep_decl, token->getPos());
 }
@@ -74,8 +102,17 @@ checkId(Poliz *poliz)
 {
 	Identifier *identifier = symbolTable.find(idname);
 	if (identifier) {
-		typeStack.push(identifier->type);
-		poliz->insert(new IntAddress(identifier->ptr));
+		if (identifier->checkType(ARRAY)) {
+			poliz->insert(new IntAddress(identifier->ptr));
+			expect(LBRACKET, err_lbracket);
+			expression(poliz);
+			expect(RBRACKET, err_rbracket);
+			poliz->insert(new Inst_AddrPlus());
+			typeStack.push(INT);
+		} else {
+			typeStack.push(INT);
+			poliz->insert(new IntAddress(identifier->ptr));
+		}
 	} else {
 		errx(EXIT_FAILURE, err_not_decl, token->getPos());
 	}
@@ -102,7 +139,7 @@ checkType()
 }
 
 void Parser::
-binaryOperation(Poliz *poliz)
+binaryOperation(Poliz *poliz, Stack<OpType> &opStack)
 {
 	OpType type = token->getOpType();
 	int curPrecedence = precedence[type];
@@ -116,8 +153,16 @@ binaryOperation(Poliz *poliz)
 void Parser::
 gvar(Poliz *poliz)
 {
+	DataType *type;
 	for (;;) {
-		declare(poliz);
+		type = new DataType(dtype);
+		if (tokenType == LBRACKET) {
+			expect(CONST_INT, err_integer);
+			type = new DataType(type, token->getInt());
+			expect(RBRACKET, err_rbracket);
+			get();
+		}
+		declare(poliz, type);
 		if (tokenType == SEMICOLON)
 			break;
 		if (tokenType != COMMA)
@@ -135,7 +180,7 @@ var(Poliz *poliz)
 }
 
 void Parser::
-unaryOperation()
+unaryOperation(Stack<OpType> &opStack)
 {
 	OpType type = token->getOpType();
 	switch (type) {
@@ -165,10 +210,8 @@ expressionArg(Poliz *poliz)
 		checkId(poliz);
 		poliz->insert(new Inst_dereference());
 	} else if (tokenType == LPARENTHESIS) {
-		opStack.push(LParentOp);
 		expression(poliz);
-		if (tokenType != RPARENTHESIS)
-			errx(EXIT_FAILURE, err_rparent, token->getPos());
+		expect(RPARENTHESIS, err_rparent);
 	} else {
 		errx(EXIT_FAILURE, err_expression, token->getPos());
 	}
@@ -177,30 +220,29 @@ expressionArg(Poliz *poliz)
 void Parser::
 expression(Poliz *poliz)
 {
+	Stack<OpType> opStack(80);
 	for (;;) {
 		get();
 		if (tokenType == OPERATOR) {
-			unaryOperation();
+			unaryOperation(opStack);
 			continue;
 		}
 		expressionArg(poliz);
 		get();
 		if (tokenType != OPERATOR)
 			break;
-		binaryOperation(poliz);
+		binaryOperation(poliz, opStack);
 	}
-	flushOperationStack(poliz);
+	flushOperationStack(poliz, opStack);
 	isSkippingNextGet = true;
 }
 
 void Parser::
-flushOperationStack(Poliz *poliz)
+flushOperationStack(Poliz *poliz, Stack<OpType> &opStack)
 {
 	while (opStack.getLength()) {
 		OpType type;
 		type = opStack.pop();
-		if (type == LParentOp)
-			break;
 		insertInstruction(poliz, type);
 		checkType();
 	}
@@ -214,7 +256,7 @@ statementGoto(Poliz *poliz)
 	int pos = token->getPos();
 	Identifier *ident = symbolTable.find(idname);
 	if (ident) {
-		if (ident->type != LABEL)
+		if (!ident->checkType(LABEL))
 			errx(EXIT_FAILURE, err_ident_not_label, pos);
 		addr = static_cast<PolizItemNode*>(ident->ptr);
 		poliz->insert(new Label(addr));
@@ -306,7 +348,7 @@ declareLabel(Poliz *poliz)
 {
 	int res;
 	PolizItemNode *addr = poliz->getTail();
-	Identifier ident(LABEL, addr);
+	Identifier *ident = new Identifier(new DataType(LABEL), addr);
 	res = symbolTable.insert(token->getIdentifier(), ident);
 	if (res < 0)
 		errx(EXIT_FAILURE, err_rep_decl, token->getPos());
@@ -315,10 +357,8 @@ declareLabel(Poliz *poliz)
 void Parser::
 assignment(Poliz *poliz)
 {
-	get();
-	if (tokenType != EQUALSIGN)
-		errx(EXIT_FAILURE, err_equal, token->getPos());
 	checkId(poliz);
+	expect(EQUALSIGN, err_equal);
 	expression(poliz);
 	expect(SEMICOLON, err_semicolon);
 	checkAssignment(poliz);
@@ -387,7 +427,7 @@ insertLabels()
 		Identifier *ident = symbolTable.find(item.id);
 		if (!ident)
 			errx(EXIT_FAILURE, err_undefined_label, item.line);
-		if (ident->type != LABEL)
+		if (!ident->checkType(LABEL))
 			errx(EXIT_FAILURE, err_ident_not_label, item.line);
 		PolizItemNode *addr;
 		addr = static_cast<PolizItemNode*>(ident->ptr);

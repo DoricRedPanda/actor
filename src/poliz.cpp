@@ -30,6 +30,14 @@ eval(SStack &stack)
 	printf("%ld\n", foo);
 }
 
+void Inst_AddrPlus::
+eval(SStack &stack)
+{
+	intptr_t bar = stack.pop();
+	int *foo = reinterpret_cast<int*>(stack.pop());
+	stack.push(reinterpret_cast<intptr_t>(foo + bar));
+}
+
 void Inst_mov::
 eval(SStack &stack)
 {

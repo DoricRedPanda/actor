@@ -26,15 +26,16 @@ class Map {
 	struct Node {
 		Color color;
 		const Key key;
-		T item;
+		T* item;
 		Node *left, *right, *parent;
 
-		Node(const Key &k, const T &it, Node *prnt = NULL)
+		Node(const Key &k, T *it, Node *prnt = NULL)
 			: color(RED), key(k), item(it)
 		{
 			left = right = NULL;
 			parent = prnt;
 		}
+		~Node() { delete item; }
 	};
 	Node *root;
 protected:
@@ -72,7 +73,7 @@ protected:
 		node->parent = head;
 	}
 
-	Node *getNode(const Key &key) const
+	Node* getNode(const Key &key) const
 	{
 		int cmp;
 		Node *node = root;
@@ -187,17 +188,17 @@ public:
 	Map() : root(NULL) {}
 	~Map() { clear(root); }
 
-	T *find(const Key &key) const
+	T* find(const Key &key) const
 	{
 		Node *node = getNode(key);
-		return node ? &node->item : NULL;
+		return node ? node->item : NULL;
 	}
-	T &operator[](const Key &key) const
+	T& operator[](const Key &key) const
 	{
 		return *find(key);
 	}
 
-	int insert(const Key &key, const T &item)
+	int insert(const Key &key, T *item)
 	{
 		Node **link = &root, *parent = NULL;
 		int cmp;

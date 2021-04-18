@@ -64,6 +64,18 @@ public:
 	void* getPointer() { return &value; }
 };
 
+class Array: public Instruction {
+	size_t size;
+	void *array;
+public:
+	Array(size_t size) : size(size) {
+		array = malloc(size * sizeof(int));
+	}
+	~Array() { free(array); }
+	void eval(SStack &stack) { stack = stack; }
+	void* getPointer() { return array; }
+};
+
 class Inst_print: public Instruction {
 public:
 	void eval(SStack &stackPoliz);
@@ -184,5 +196,9 @@ public:
 	void eval(SStack &stackPoliz);
 };
 
+class Inst_AddrPlus: public Instruction {
+public:
+	void eval(SStack &stackPoliz);
+};
 
 #endif

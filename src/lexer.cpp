@@ -100,7 +100,7 @@ sign(TokenList *list)
 	get();
 	if (isdigit(ch)) {
 		number(list);
-	} else if (ispunct(ch)) {
+	} else if (ispunct(ch) && !strchr(delimiters, ch)) {
 		punctuation(list);
 	} else {
 		OpType type = buf[0] == '+' ? ADD : SUB;

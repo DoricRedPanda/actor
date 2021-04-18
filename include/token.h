@@ -23,7 +23,8 @@ enum TokenType {
 enum BaseType {
 	INT,
 	LABEL,
-	POINTER
+	POINTER,
+	ARRAY
 };
 
 enum OpType {
@@ -41,8 +42,7 @@ enum OpType {
 	// Following operations checked at the stage of syntax analysys
 	NEG,
 	DEREFERENCE,
-	CALL,
-	LParentOp
+	CALL
 };
 
 enum StatementType {
