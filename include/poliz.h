@@ -69,7 +69,9 @@ class Array: public Instruction {
 	void *array;
 public:
 	Array(size_t size) : size(size) {
-		array = malloc(size * sizeof(int));
+		array = malloc(size);
+		if (!array)
+			err(EXIT_FAILURE, "Array allocation failed");
 	}
 	~Array() { free(array); }
 	void eval(SStack &stack) { stack = stack; }

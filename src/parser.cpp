@@ -16,7 +16,7 @@ static const int precedence[] = {
 	2, 2
 };
 
-static const char err_rep_decl[] = "\t%d\t|\tBad declaration";
+static const char err_bad_decl[] = "\t%d\t|\tBad declaration";
 static const char err_not_decl[] = "\t%d\t|\tNot declared";
 static const char err_type_assign[] = "\t%d\t|\tAssignment requires matching types";
 static const char err_identifier[] = "\t%d\t|\tIdentifier expected";
@@ -94,7 +94,7 @@ declare(Poliz *poliz, DataType *type)
 		res = symbolTable.insert(idname, ident);
 	}
 	if (res < 0)
-		errx(EXIT_FAILURE, err_rep_decl, token->getPos());
+		errx(EXIT_FAILURE, err_bad_decl, token->getPos());
 }
 
 void Parser::
@@ -220,7 +220,7 @@ expressionArg(Poliz *poliz)
 void Parser::
 expression(Poliz *poliz)
 {
-	Stack<OpType> opStack(80);
+	Stack<OpType> opStack(STACK_SIZE);
 	for (;;) {
 		get();
 		if (tokenType == OPERATOR) {
@@ -351,7 +351,7 @@ declareLabel(Poliz *poliz)
 	Identifier *ident = new Identifier(new DataType(LABEL), addr);
 	res = symbolTable.insert(token->getIdentifier(), ident);
 	if (res < 0)
-		errx(EXIT_FAILURE, err_rep_decl, token->getPos());
+		errx(EXIT_FAILURE, err_bad_decl, token->getPos());
 }
 
 void Parser::

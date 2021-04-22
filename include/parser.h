@@ -9,6 +9,8 @@
 #include "stack.h"
 #include "poliz.h"
 
+#define STACK_SIZE 32
+
 typedef List<PolizItem*> Poliz;
 
 struct DataType {
@@ -86,8 +88,8 @@ class Parser {
 	void insertInstruction(Poliz *poliz, OpType type);
 public:
 	Parser(TokenList *ptrList)
-	    : list(*ptrList), typeStack(80),
-	      labelStack(80),
+	    : list(*ptrList), typeStack(STACK_SIZE),
+	      labelStack(STACK_SIZE),
 	      isSkippingNextGet(false) {}
 	Poliz* analyze();
 };
