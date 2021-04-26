@@ -2,7 +2,8 @@ program_name := actor
 
 CXX = g++
 CXXFLAGS = -Wall -Wextra -pedantic -ansi
-linkerflags =
+linker_flags =
+debug_flags = -g -fanalyzer -DDEBUG
 
 source_dir := src
 include_dir := include
@@ -22,13 +23,16 @@ install: $(program_name)
 	cp $(program_name) $(install_dir)/
 
 $(program_name): $(object_files)
-	$(CXX) $^ ${linkerflags} -o $@
+	$(CXX) $^ ${linker_flags} -o $@
 
 $(bin_dir)/%.o: %.cpp
 	$(CXX) -c $< $(CXXFLAGS) -I$(include_dir) -I$(source_dir) -o $@
 
+debug: $(source_files)
+	$(CXX) $^ $(CXXFLAGS) $(debug_flags) -I$(include_dir) -o $@
+
 clean:
-	$(RM) $(bin_dir)/*.o $(program_name)
+	$(RM) $(bin_dir)/*.o $(program_name) debug
 
 uninstall:
 	$(RM) $(install_dir)/$(program_name)
