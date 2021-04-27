@@ -22,9 +22,12 @@ enum TokenType {
 
 enum BaseType {
 	INT,
+	VOID,
 	LABEL,
 	POINTER,
-	ARRAY
+	ARRAY,
+	FUNCTION,
+	PROCEDURE
 };
 
 enum OpType {

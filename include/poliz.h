@@ -5,7 +5,32 @@
 #include "stack.h"
 #include "list.h"
 
-typedef Stack<intptr_t> SStack;
+class SStack: public Stack<intptr_t> {
+	size_t bottomPointer;
+public:
+	SStack(size_t size) : Stack(size), bottomPointer(0) {}
+	intptr_t& operator[](intptr_t i) { return item[bottomPointer + i]; }
+	void setBP(size_t bp) { bottomPointer = bp; }
+	intptr_t getSP() { return tail; }
+	intptr_t getBP() { return bottomPointer; }
+	void createFrame()
+	{
+		push(bottomPointer);
+		setBP(tail - 1);
+	}
+
+	void destroyFrame()
+	{
+		tail = bottomPointer - 1;
+		bottomPointer = item[bottomPointer];
+	}
+
+	void reserve(size_t count) {
+		if (tail + count >= size)
+			expand(tail + count - size);
+		tail += count;
+	}
+};
 
 class PolizItem {
 protected:
@@ -18,6 +43,11 @@ public:
 typedef List<PolizItem*> Poliz;
 typedef List<PolizItem*>::Node<PolizItem*> PolizItemNode;
 
+class PolizExit: public PolizItem {
+public:
+	void eval(SStack &stack, Poliz *ptrPoliz);
+};
+
 class PolizOpGo: public PolizItem {
 public:
 	void eval(SStack &stack, Poliz *ptrPoliz);
@@ -25,6 +55,14 @@ public:
 
 class PolizOpGoFalse: public PolizItem {
 public:
+	void eval(SStack &stack, Poliz *ptrPoliz);
+};
+
+class ProcedureCall: public PolizItem {
+	void eval(SStack &stack, Poliz *ptrPoliz);
+};
+
+class ProcedureReturn: public PolizItem {
 	void eval(SStack &stack, Poliz *ptrPoliz);
 };
 
@@ -78,12 +116,25 @@ public:
 	void* getPointer() { return array; }
 };
 
+class Subprogram: public Instruction {
+	size_t localVarCount;
+public:
+	Subprogram(size_t count) : localVarCount(count) {}
+	void eval(SStack &stackPoliz);
+};
+
+
 class Inst_print: public Instruction {
 public:
 	void eval(SStack &stackPoliz);
 };
 
 class Inst_mov: public Instruction {
+public:
+	void eval(SStack &stackPoliz);
+};
+
+class Inst_movStack: public Instruction {
 public:
 	void eval(SStack &stackPoliz);
 };
@@ -194,6 +245,11 @@ public:
 };
 
 class Inst_dereference: public Instruction {
+public:
+	void eval(SStack &stackPoliz);
+};
+
+class Inst_dereferenceStack: public Instruction {
 public:
 	void eval(SStack &stackPoliz);
 };

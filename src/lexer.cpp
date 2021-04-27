@@ -18,6 +18,7 @@ static const char *lexSpecialSymbol[] = {
 
 static const char *lexBaseType[] = {
 	"int",
+	"void",
 	NULL
 };
 

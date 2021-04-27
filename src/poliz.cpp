@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include "poliz.h"
 
+void PolizExit::
+eval(SStack &stack, Poliz *ptrPoliz)
+{
+	stack = stack;
+	ptrPoliz->setPos(NULL);
+}
+
 void PolizOpGo::
 eval(SStack &stack, Poliz *ptrPoliz)
 {
@@ -21,6 +28,33 @@ eval(SStack &stack, Poliz *ptrPoliz)
 		ptrPoliz->setPos(pos);
 		ptrPoliz->next();
 	}
+}
+
+
+void ProcedureCall::
+eval(SStack &stack, Poliz *ptrPoliz)
+{
+	PolizItemNode *retAddress = ptrPoliz->getPos();
+	PolizItemNode *procedureAddress =
+	    reinterpret_cast<PolizItemNode*>(stack.pop());
+	ptrPoliz->setPos(procedureAddress);
+	stack.push(reinterpret_cast<intptr_t>(retAddress));
+}
+
+void Subprogram::
+eval(SStack &stack)
+{
+	stack.createFrame();
+	stack.reserve(localVarCount);
+}
+
+void ProcedureReturn::
+eval(SStack &stack, Poliz *ptrPoliz)
+{
+	PolizItemNode *pos;
+	stack.destroyFrame();
+	pos = reinterpret_cast<PolizItemNode*>(stack.pop());
+	ptrPoliz->setPos(pos);
 }
 
 void Inst_print::
@@ -44,6 +78,14 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	int *foo = reinterpret_cast<int*>(stack.pop());
 	*foo = bar;
+}
+
+void Inst_movStack::
+eval(SStack &stack)
+{
+	intptr_t value = stack.pop();
+	intptr_t index = stack.pop();
+	stack[index] = value;
 }
 
 void Inst_or::
@@ -225,4 +267,11 @@ eval(SStack &stack)
 {
 	int *foo = reinterpret_cast<int*>(stack.pop());
 	stack.push(*foo);
+}
+
+void Inst_dereferenceStack::
+eval(SStack &stack)
+{
+	intptr_t foo = stack.pop();
+	stack.push(stack[foo]);
 }

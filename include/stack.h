@@ -4,10 +4,10 @@
 #include <stdlib.h>
 
 template <class T> class Stack {
+protected:
 	T *item;
 	size_t size;
 	size_t tail;
-protected:
 	void expand(size_t additional)
 	{
 		size += additional;

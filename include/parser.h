@@ -35,16 +35,27 @@ struct Identifier {
 	Identifier(DataType *type, void *ptr)
 	    : type(type), ptr(ptr) {}
 	~Identifier() { delete type; }
-	bool checkType(BaseType bt) const;
+	bool equals(BaseType bt) const;
 };
+
+struct LocalIdentifier {
+	DataType *type;
+	intptr_t ptr;
+	LocalIdentifier(DataType *type, intptr_t ptr)
+	    : type(type), ptr(ptr) {}
+	~LocalIdentifier() { delete type; }
+	bool equals(BaseType bt) const;
+};
+
+typedef Map<const char*, LocalIdentifier, strcmp> LocalSymbolTable;
 
 class Parser {
 	struct UndefinedLabel {
-		const char *id;
+		const char *name;
 		Label *label;
 		int line;
-		UndefinedLabel(const char id[], Label *label, int line)
-		    : id(id), label(label), line(line) {}
+		UndefinedLabel(const char name[], Label *label, int line)
+		    : name(name), label(label), line(line) {}
 	};
 	TokenList &list;
 	Map<const char*, Identifier, strcmp> symbolTable;
@@ -60,28 +71,32 @@ class Parser {
 	void get();
 	void expect(TokenType type, const char errmsg[]);
 	/* syntax analyzer */
-	void var(Poliz *poliz);
+	long var(LocalSymbolTable &localST);
 	void gvar(Poliz *poliz);
-	void function(Poliz *poliz);
+	void subprogram(Poliz *poliz);
 	void dataType();
-	void body(Poliz *poliz);
-	void statement(Poliz *poliz);
-	void assignment(Poliz *poliz);
-	void keyword(Poliz *poliz);
-	void expression(Poliz *poliz);
-	void expressionArg(Poliz *poliz);
+	void body(Poliz *poliz, LocalSymbolTable &localST);
+	void statement(Poliz *poliz, LocalSymbolTable &localST);
+	void assignment(Poliz *poliz, LocalSymbolTable &localST);
+	void keyword(Poliz *poliz, LocalSymbolTable &localST);
+	void expression(Poliz *poliz, LocalSymbolTable &localST);
+	void expressionArg(Poliz *poliz, LocalSymbolTable &localST);
 	void binaryOperation(Poliz *poliz, Stack<OpType> &opStack);
 	void unaryOperation(Stack<OpType> &opStack);
 	void statementGoto(Poliz *poliz);
-	void branching(Poliz *poliz);
-	void cycle(Poliz *poliz);
-	void writing(Poliz *poliz);
+	void identifierStatement(Poliz *poliz, LocalSymbolTable &localST);
+	void procedureCall(Poliz *poliz, Identifier *identifier);
+	void branching(Poliz *poliz, LocalSymbolTable &localST);
+	void cycle(Poliz *poliz, LocalSymbolTable &localST);
+	void writing(Poliz *poliz, LocalSymbolTable &localST);
 	/* semantic analyzer */
 	void declare(Poliz *poliz, DataType *type);
+	void declareLocalVariable(DataType *type, LocalSymbolTable &localST, size_t index);
 	void declareLabel(Poliz *poliz);
-	void checkId(Poliz *poliz);
+	void checkIdentifier(Poliz *poliz, Identifier *identifier, LocalSymbolTable &localST);
+	void checkLocalIdentifier(Poliz *poliz, LocalIdentifier *identifier);
 	void checkType();
-	void checkAssignment(Poliz *poliz);
+	void checkType(BaseType expectedType);
 	void insertLabels();
 	void flushOperationStack(Poliz *poliz, Stack<OpType> &opStack);
 	/* Poliz building */
@@ -93,5 +108,6 @@ public:
 	      isSkippingNextGet(false) {}
 	Poliz* analyze();
 };
+
 
 #endif
