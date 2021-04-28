@@ -63,6 +63,7 @@ class Parser {
 	Stack<UndefinedLabel> labelStack;
 	Token *token;
 	TokenType tokenType;
+	/* FIXME get rid of dtype and hopefully idname */
 	const char *idname;
 	BaseType dtype;
 	bool isSkippingNextGet;

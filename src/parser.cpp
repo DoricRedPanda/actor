@@ -110,6 +110,7 @@ declare(Poliz *poliz, DataType *type)
 		errx(EXIT_FAILURE, err_bad_decl, token->getPos());
 }
 
+/* FIXME redesign */
 void Parser::
 declareLocalVariable(DataType *type,
                      LocalSymbolTable &localST, size_t index)
@@ -123,6 +124,7 @@ declareLocalVariable(DataType *type,
 		errx(EXIT_FAILURE, err_bad_decl, token->getPos());
 }
 
+/* FIXME redesign */
 void Parser::
 checkLocalIdentifier(Poliz *poliz, LocalIdentifier *identifier)
 {
@@ -134,6 +136,7 @@ checkLocalIdentifier(Poliz *poliz, LocalIdentifier *identifier)
 	}
 }
 
+/* FIXME redesign */
 void Parser::
 checkIdentifier(Poliz *poliz, Identifier *identifier,
                 LocalSymbolTable &localST)
@@ -166,6 +169,7 @@ subprogramCall(Poliz *poliz, Identifier *identifier)
 	poliz->insert(new SubprogramCall());
 }
 
+/* FIXME redesign */
 void Parser::
 identifierStatement(Poliz *poliz, LocalSymbolTable &localST)
 {
@@ -290,6 +294,7 @@ unaryOperation(Stack<OpType> &opStack)
 	opStack.push(type);
 }
 
+/* FIXME redesign */
 void Parser::
 expressionArg(Poliz *poliz, LocalSymbolTable &localST)
 {
@@ -520,6 +525,7 @@ body(Poliz *poliz, LocalSymbolTable &localST)
 	}
 }
 
+/* FIXME redesign */
 void Parser::
 subprogram(Poliz *poliz)
 {
