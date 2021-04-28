@@ -54,7 +54,8 @@ enum StatementType {
 	ELSE,
 	WHILE,
 	READ,
-	WRITE
+	WRITE,
+	RETURN
 };
 
 class Token {

@@ -44,6 +44,7 @@ static const char *lexStatement[] = {
 	"while",
 	"read",
 	"write",
+	"return",
 	NULL
 };
 

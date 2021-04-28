@@ -85,7 +85,8 @@ class Parser {
 	void unaryOperation(Stack<OpType> &opStack);
 	void statementGoto(Poliz *poliz);
 	void identifierStatement(Poliz *poliz, LocalSymbolTable &localST);
-	void procedureCall(Poliz *poliz, Identifier *identifier);
+	void returnStatement(Poliz *poliz, LocalSymbolTable &localST);
+	void subprogramCall(Poliz *poliz, Identifier *identifier);
 	void branching(Poliz *poliz, LocalSymbolTable &localST);
 	void cycle(Poliz *poliz, LocalSymbolTable &localST);
 	void writing(Poliz *poliz, LocalSymbolTable &localST);

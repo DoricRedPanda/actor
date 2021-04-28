@@ -156,15 +156,14 @@ checkIdentifier(Poliz *poliz, Identifier *identifier,
 }
 
 void Parser::
-procedureCall(Poliz *poliz, Identifier *identifier)
+subprogramCall(Poliz *poliz, Identifier *identifier)
 {
 	PolizItemNode *addr;
 	expect(LPARENTHESIS, err_lparent);
 	expect(RPARENTHESIS, err_rparent);
-	expect(SEMICOLON, err_semicolon);
 	addr = static_cast<PolizItemNode*>(identifier->ptr);
 	poliz->insert(new Label(addr));
-	poliz->insert(new ProcedureCall());
+	poliz->insert(new SubprogramCall());
 }
 
 void Parser::
@@ -181,7 +180,8 @@ identifierStatement(Poliz *poliz, LocalSymbolTable &localST)
 	if (!identifier)
 		errx(EXIT_FAILURE, err_not_decl, token->getPos());
 	if (identifier->equals(PROCEDURE)) {
-		procedureCall(poliz, identifier);
+		subprogramCall(poliz, identifier);
+		expect(SEMICOLON, err_semicolon);
 	} else {
 		checkIdentifier(poliz, identifier, localST);
 		assignment(poliz, localST);
@@ -302,8 +302,13 @@ expressionArg(Poliz *poliz, LocalSymbolTable &localST)
 			checkLocalIdentifier(poliz, localIdentifier);
 			poliz->insert(new Inst_dereferenceStack());
 		} else {
-			checkIdentifier(poliz, symbolTable.find(idname), localST);
-			poliz->insert(new Inst_dereference());
+			Identifier *identifier = symbolTable.find(idname);
+			if (identifier && identifier->equals(FUNCTION)) {
+				subprogramCall(poliz, identifier);
+			} else {
+				checkIdentifier(poliz, identifier, localST);
+				poliz->insert(new Inst_dereference());
+			}
 		}
 	} else if (tokenType == LPARENTHESIS) {
 		expression(poliz, localST);
@@ -437,6 +442,9 @@ keyword(Poliz *poliz, LocalSymbolTable &localST)
 	case WRITE:
 		writing(poliz, localST);
 		break;
+	case RETURN:
+		returnStatement(poliz, localST);
+		break;
 	default:
 		errx(EXIT_FAILURE, err_implementation, token->getPos());
 	}
@@ -463,6 +471,14 @@ assignment(Poliz *poliz, LocalSymbolTable &localST)
 }
 
 void Parser::
+returnStatement(Poliz *poliz, LocalSymbolTable &localST)
+{
+	expression(poliz, localST);
+	expect(SEMICOLON, err_semicolon);
+	poliz->insert(new FunctionReturn());
+}
+
+void Parser::
 statement(Poliz *poliz, LocalSymbolTable &localST)
 {
 	get();
@@ -481,6 +497,9 @@ statement(Poliz *poliz, LocalSymbolTable &localST)
 		break;
 	case BEGIN:
 		body(poliz, localST);
+		break;
+	case RETURN:
+		returnStatement(poliz, localST);
 		break;
 	default:
 		errx(EXIT_FAILURE, err_bad_statement, token->getPos());
@@ -550,7 +569,7 @@ analyze()
 	Poliz *poliz = new Poliz;
 	Label *label = new Label(NULL);
 	poliz->insert(label);
-	poliz->insert(new ProcedureCall());
+	poliz->insert(new SubprogramCall());
 	poliz->insert(new PolizExit());
 	for (;;) {
 		get();

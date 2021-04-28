@@ -58,11 +58,15 @@ public:
 	void eval(SStack &stack, Poliz *ptrPoliz);
 };
 
-class ProcedureCall: public PolizItem {
+class SubprogramCall: public PolizItem {
 	void eval(SStack &stack, Poliz *ptrPoliz);
 };
 
 class ProcedureReturn: public PolizItem {
+	void eval(SStack &stack, Poliz *ptrPoliz);
+};
+
+class FunctionReturn: public PolizItem {
 	void eval(SStack &stack, Poliz *ptrPoliz);
 };
 

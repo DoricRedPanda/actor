@@ -31,13 +31,13 @@ eval(SStack &stack, Poliz *ptrPoliz)
 }
 
 
-void ProcedureCall::
+void SubprogramCall::
 eval(SStack &stack, Poliz *ptrPoliz)
 {
 	PolizItemNode *retAddress = ptrPoliz->getPos();
-	PolizItemNode *procedureAddress =
+	PolizItemNode *subprogramAddress =
 	    reinterpret_cast<PolizItemNode*>(stack.pop());
-	ptrPoliz->setPos(procedureAddress);
+	ptrPoliz->setPos(subprogramAddress);
 	stack.push(reinterpret_cast<intptr_t>(retAddress));
 }
 
@@ -55,6 +55,17 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	stack.destroyFrame();
 	pos = reinterpret_cast<PolizItemNode*>(stack.pop());
 	ptrPoliz->setPos(pos);
+}
+
+void FunctionReturn::
+eval(SStack &stack, Poliz *ptrPoliz)
+{
+	PolizItemNode *pos;
+	intptr_t returnValue = stack.pop();
+	stack.destroyFrame();
+	pos = reinterpret_cast<PolizItemNode*>(stack.pop());
+	ptrPoliz->setPos(pos);
+	stack.push(returnValue);
 }
 
 void Inst_print::
