@@ -218,7 +218,6 @@ analyze()
 			errx(EXIT_FAILURE, err_invalid_char, line, ch);
 		clear();
 	}
-	list->insert(Token(line, TOKEN_NULL));
 	return list;
 }
 

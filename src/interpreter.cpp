@@ -18,11 +18,14 @@ interpret()
 {
 	SStack stack(sstack_len);
 	PolizItem **ptr;
+#ifdef DEBUG
+	fprintf(stderr, "Interpretation:\n");
+#endif
 	for (;;) {
 		ptr = ptrPoliz->next();
 		if (!ptr)
 			break;
 		(*ptr)->eval(stack, ptrPoliz);
 	}
-	return 0; //TODO implement error handling
+	return stack.pop();
 }

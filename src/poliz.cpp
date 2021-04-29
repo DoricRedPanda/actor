@@ -7,6 +7,9 @@ eval(SStack &stack, Poliz *ptrPoliz)
 {
 	stack = stack;
 	ptrPoliz->setPos(NULL);
+#ifdef DEBUG
+	fprintf(stderr, "exit\n");
+#endif
 }
 
 void PolizOpGo::
@@ -16,6 +19,9 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	    reinterpret_cast<PolizItemNode*>(stack.pop());
 	ptrPoliz->setPos(pos);
 	ptrPoliz->next();
+#ifdef DEBUG
+	fprintf(stderr, "goto %p\n", (void*) pos);
+#endif
 }
 
 void PolizOpGoFalse::
@@ -28,6 +34,9 @@ eval(SStack &stack, Poliz *ptrPoliz)
 		ptrPoliz->setPos(pos);
 		ptrPoliz->next();
 	}
+#ifdef DEBUG
+	fprintf(stderr, "goto %p if not %ld\n", (void*) pos, value);
+#endif
 }
 
 
@@ -39,6 +48,9 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	    reinterpret_cast<PolizItemNode*>(stack.pop());
 	ptrPoliz->setPos(subprogramAddress);
 	stack.push(reinterpret_cast<intptr_t>(retAddress));
+#ifdef DEBUG
+	fprintf(stderr, "call %p\n", (void*) subprogramAddress);
+#endif
 }
 
 void Subprogram::
@@ -46,6 +58,10 @@ eval(SStack &stack)
 {
 	stack.createFrame();
 	stack.reserve(localVarCount);
+#ifdef DEBUG
+	fprintf(stderr, "Create stack frame\n");
+	fprintf(stderr, "reserve %ld local variables\n", localVarCount);
+#endif
 }
 
 void ProcedureReturn::
@@ -55,6 +71,9 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	stack.destroyFrame();
 	pos = reinterpret_cast<PolizItemNode*>(stack.pop());
 	ptrPoliz->setPos(pos);
+#ifdef DEBUG
+	fprintf(stderr, "procedure ret\n");
+#endif
 }
 
 void FunctionReturn::
@@ -66,11 +85,17 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	pos = reinterpret_cast<PolizItemNode*>(stack.pop());
 	ptrPoliz->setPos(pos);
 	stack.push(returnValue);
+#ifdef DEBUG
+	fprintf(stderr, "function ret\n");
+#endif
 }
 
 void Inst_print::
 eval(SStack &stack)
 {
+#ifdef DEBUG
+	fprintf(stderr, "write:\n");
+#endif
 	intptr_t foo = stack.pop();
 	printf("%ld\n", foo);
 }
@@ -81,6 +106,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	int *foo = reinterpret_cast<int*>(stack.pop());
 	stack.push(reinterpret_cast<intptr_t>(foo + bar));
+#ifdef DEBUG
+	fprintf(stderr, "%p address+ %ld\n", (void*) foo, bar);
+#endif
 }
 
 void Inst_mov::
@@ -89,6 +117,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	int *foo = reinterpret_cast<int*>(stack.pop());
 	*foo = bar;
+#ifdef DEBUG
+	fprintf(stderr, "mov %p, %ld\n", (void*) foo, bar);
+#endif
 }
 
 void Inst_movStack::
@@ -97,6 +128,10 @@ eval(SStack &stack)
 	intptr_t value = stack.pop();
 	intptr_t index = stack.pop();
 	stack[index] = value;
+#ifdef DEBUG
+	fprintf(stderr, "stack_mov [%ld + %ld], %ld\n",
+	    stack.getBP(), index, value);
+#endif
 }
 
 void Inst_or::
@@ -105,6 +140,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo || bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld || %ld\n", foo, bar);
+#endif
 }
 
 void Inst_and::
@@ -113,6 +151,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo && bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld && %ld\n", foo, bar);
+#endif
 }
 
 void Inst_bitor::
@@ -121,6 +162,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo | bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld | %ld\n", foo, bar);
+#endif
 }
 
 void Inst_xor::
@@ -129,6 +173,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo ^ bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld ^ %ld\n", foo, bar);
+#endif
 }
 
 void Inst_bitand::
@@ -137,6 +184,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo & bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld & %ld\n", foo, bar);
+#endif
 }
 
 void Inst_eq::
@@ -145,6 +195,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo == bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld == %ld\n", foo, bar);
+#endif
 }
 
 void Inst_neq::
@@ -153,6 +206,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo != bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld != %ld\n", foo, bar);
+#endif
 }
 
 void Inst_leq::
@@ -161,6 +217,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo <= bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld <= %ld\n", foo, bar);
+#endif
 }
 
 void Inst_lt::
@@ -169,6 +228,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo < bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld < %ld\n", foo, bar);
+#endif
 }
 
 void Inst_geq::
@@ -177,6 +239,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo >= bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld >= %ld\n", foo, bar);
+#endif
 }
 
 void Inst_gt::
@@ -185,6 +250,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo > bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld > %ld\n", foo, bar);
+#endif
 }
 
 void Inst_shl::
@@ -193,6 +261,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo << bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld << %ld\n", foo, bar);
+#endif
 }
 
 void Inst_shr::
@@ -201,6 +272,9 @@ eval(SStack &stack)
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
 	stack.push(foo >> bar);
+#ifdef DEBUG
+	fprintf(stderr, "%ld >> %ld\n", foo, bar);
+#endif
 }
 
 void Inst_add::
@@ -210,6 +284,9 @@ eval(SStack &stack)
 	intptr_t foo = stack.pop();
 	foo += bar;
 	stack.push(foo);
+#ifdef DEBUG
+	fprintf(stderr, "%ld + %ld\n", foo, bar);
+#endif
 }
 
 void Inst_sub::
@@ -219,6 +296,9 @@ eval(SStack &stack)
 	intptr_t foo = stack.pop();
 	foo -= bar;
 	stack.push(foo);
+#ifdef DEBUG
+	fprintf(stderr, "%ld - %ld\n", foo, bar);
+#endif
 }
 
 void Inst_mul::
@@ -228,6 +308,9 @@ eval(SStack &stack)
 	intptr_t foo = stack.pop();
 	foo *= bar;
 	stack.push(foo);
+#ifdef DEBUG
+	fprintf(stderr, "%ld * %ld\n", foo, bar);
+#endif
 }
 
 void Inst_div::
@@ -239,6 +322,9 @@ eval(SStack &stack)
 		errx(EXIT_FAILURE, "RT: division by zero");
 	foo /= bar;
 	stack.push(foo);
+#ifdef DEBUG
+	fprintf(stderr, "%ld / %ld\n", foo, bar);
+#endif
 }
 
 void Inst_mod::
@@ -250,6 +336,9 @@ eval(SStack &stack)
 		errx(EXIT_FAILURE, "RT: division by zero");
 	foo %= bar;
 	stack.push(foo);
+#ifdef DEBUG
+	fprintf(stderr, "%ld %% %ld\n", foo, bar);
+#endif
 }
 
 void Inst_not::
@@ -257,6 +346,9 @@ eval(SStack &stack)
 {
 	intptr_t foo = stack.pop();
 	stack.push(!foo);
+#ifdef DEBUG
+	fprintf(stderr, "! %ld\n", foo);
+#endif
 }
 
 void Inst_bitnot::
@@ -264,6 +356,9 @@ eval(SStack &stack)
 {
 	intptr_t foo = stack.pop();
 	stack.push(~foo);
+#ifdef DEBUG
+	fprintf(stderr, "~ %ld\n", foo);
+#endif
 }
 
 void Inst_neg::
@@ -271,6 +366,9 @@ eval(SStack &stack)
 {
 	intptr_t foo = stack.pop();
 	stack.push(-foo);
+#ifdef DEBUG
+	fprintf(stderr, "neg %ld\n", foo);
+#endif
 }
 
 void Inst_dereference::
@@ -278,6 +376,9 @@ eval(SStack &stack)
 {
 	int *foo = reinterpret_cast<int*>(stack.pop());
 	stack.push(*foo);
+#ifdef DEBUG
+	fprintf(stderr, "(dereference) %p\n", (void*) foo);
+#endif
 }
 
 void Inst_dereferenceStack::
@@ -285,4 +386,8 @@ eval(SStack &stack)
 {
 	intptr_t foo = stack.pop();
 	stack.push(stack[foo]);
+#ifdef DEBUG
+	fprintf(stderr, "(stack dereference) [%ld + %ld]\n",
+	    stack.getBP(), foo);
+#endif
 }

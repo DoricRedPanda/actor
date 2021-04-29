@@ -3,7 +3,7 @@ program_name := actor
 CXX = g++
 CXXFLAGS = -Wall -Wextra -pedantic -ansi
 linker_flags =
-debug_flags = -g -fanalyzer -DDEBUG
+debug_flags = -g -DDEBUG
 
 source_dir := src
 include_dir := include

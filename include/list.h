@@ -63,6 +63,7 @@ public:
 		return res;
 	}
 
+	bool isEnding() const { return cur == NULL; }
 };
 
 #endif
