@@ -59,9 +59,18 @@ eval(SStack &stack)
 	stack.createFrame();
 	stack.reserve(localVarCount);
 #ifdef DEBUG
-	fprintf(stderr, "Create stack frame\n");
+	fprintf(stderr, "Create stack frame. Old BP = %ld, New BP = %ld\n",
+	    stack[0], stack.getBP());
 	fprintf(stderr, "reserve %ld local variables\n", localVarCount);
 #endif
+}
+
+void CallerRemovesArguments::
+eval(SStack &stack)
+{
+	intptr_t retValue = stack.pop();
+	stack.slice(argNum);
+	stack.push(retValue);
 }
 
 void ProcedureReturn::
@@ -73,6 +82,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	ptrPoliz->setPos(pos);
 #ifdef DEBUG
 	fprintf(stderr, "procedure ret\n");
+	fprintf(stderr, "Restore BP %ld\n", stack.getBP());
 #endif
 }
 
@@ -87,6 +97,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	stack.push(returnValue);
 #ifdef DEBUG
 	fprintf(stderr, "ret %ld\n", returnValue);
+	fprintf(stderr, "Restore BP %ld\n", stack.getBP());
 #endif
 }
 

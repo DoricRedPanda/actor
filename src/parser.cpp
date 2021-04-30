@@ -205,6 +205,7 @@ subprogramCall(Poliz *poliz, Identifier *identifier, LocalSymTable &localST)
 	addr = static_cast<PolizItemNode*>(identifier->ptr);
 	poliz->insert(new Label(addr));
 	poliz->insert(new SubprogramCall());
+	poliz->insert(new CallerRemovesArguments(argumentNumber));
 }
 
 void Parser::

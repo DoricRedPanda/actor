@@ -143,7 +143,6 @@ word(TokenList *list)
 	} else {
 		list->insert(Token(line, IDENTIFIER, buf));
 	}
-
 }
 
 void Lexer::

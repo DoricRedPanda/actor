@@ -15,8 +15,8 @@ public:
 	intptr_t getBP() { return bottomPointer; }
 	void createFrame()
 	{
-		push(bottomPointer);
-		setBP(tail - 1);
+		this->push(getBP());
+		this->setBP(getSP() - 1);
 	}
 
 	void destroyFrame()
@@ -29,6 +29,13 @@ public:
 		if (tail + count >= size)
 			expand(tail + count - size);
 		tail += count;
+	}
+
+	void slice(size_t count)
+	{
+		if (count >= tail)
+			errx(EXIT_FAILURE, "Stack smashing");
+		tail -= count;
 	}
 };
 
@@ -59,14 +66,17 @@ public:
 };
 
 class SubprogramCall: public PolizItem {
+public:
 	void eval(SStack &stack, Poliz *ptrPoliz);
 };
 
 class ProcedureReturn: public PolizItem {
+public:
 	void eval(SStack &stack, Poliz *ptrPoliz);
 };
 
 class FunctionReturn: public PolizItem {
+public:
 	void eval(SStack &stack, Poliz *ptrPoliz);
 };
 
@@ -129,6 +139,13 @@ class Subprogram: public Instruction {
 	size_t localVarCount;
 public:
 	Subprogram(size_t count) : localVarCount(count) {}
+	void eval(SStack &stack);
+};
+
+class CallerRemovesArguments: public Instruction {
+	size_t argNum;
+public:
+	CallerRemovesArguments(size_t count) : argNum(count) {}
 	void eval(SStack &stack);
 };
 
