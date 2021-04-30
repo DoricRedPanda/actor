@@ -86,7 +86,7 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	ptrPoliz->setPos(pos);
 	stack.push(returnValue);
 #ifdef DEBUG
-	fprintf(stderr, "function ret\n");
+	fprintf(stderr, "ret %ld\n", returnValue);
 #endif
 }
 
@@ -282,8 +282,7 @@ eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
-	foo += bar;
-	stack.push(foo);
+	stack.push(foo + bar);
 #ifdef DEBUG
 	fprintf(stderr, "%ld + %ld\n", foo, bar);
 #endif
@@ -294,8 +293,7 @@ eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
-	foo -= bar;
-	stack.push(foo);
+	stack.push(foo - bar);
 #ifdef DEBUG
 	fprintf(stderr, "%ld - %ld\n", foo, bar);
 #endif
@@ -306,8 +304,7 @@ eval(SStack &stack)
 {
 	intptr_t bar = stack.pop();
 	intptr_t foo = stack.pop();
-	foo *= bar;
-	stack.push(foo);
+	stack.push(foo * bar);
 #ifdef DEBUG
 	fprintf(stderr, "%ld * %ld\n", foo, bar);
 #endif
@@ -320,8 +317,7 @@ eval(SStack &stack)
 	intptr_t foo = stack.pop();
 	if (!bar)
 		errx(EXIT_FAILURE, "RT: division by zero");
-	foo /= bar;
-	stack.push(foo);
+	stack.push(foo / bar);
 #ifdef DEBUG
 	fprintf(stderr, "%ld / %ld\n", foo, bar);
 #endif
@@ -334,8 +330,7 @@ eval(SStack &stack)
 	intptr_t foo = stack.pop();
 	if (!bar)
 		errx(EXIT_FAILURE, "RT: division by zero");
-	foo %= bar;
-	stack.push(foo);
+	stack.push(foo % bar);
 #ifdef DEBUG
 	fprintf(stderr, "%ld %% %ld\n", foo, bar);
 #endif
@@ -377,7 +372,7 @@ eval(SStack &stack)
 	int *foo = reinterpret_cast<int*>(stack.pop());
 	stack.push(*foo);
 #ifdef DEBUG
-	fprintf(stderr, "(dereference) %p\n", (void*) foo);
+	fprintf(stderr, "dereference [%p] = %d\n", (void*) foo, *foo);
 #endif
 }
 
@@ -387,7 +382,7 @@ eval(SStack &stack)
 	intptr_t foo = stack.pop();
 	stack.push(stack[foo]);
 #ifdef DEBUG
-	fprintf(stderr, "(stack dereference) [%ld + %ld]\n",
-	    stack.getBP(), foo);
+	fprintf(stderr, "(stack dereference) [%ld + %ld] = %ld\n",
+	    stack.getBP(), foo, stack[foo]);
 #endif
 }
