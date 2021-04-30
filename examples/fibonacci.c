@@ -24,4 +24,5 @@ main()
 	res = bar;
 FINISH:
 	write res;
+	return 0;
 }

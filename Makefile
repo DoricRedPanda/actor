@@ -1,7 +1,7 @@
 program_name := actor
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -pedantic -ansi
+CXXFLAGS = -Wall -Wextra -pedantic -ansi -O2
 linker_flags =
 debug_flags = -g -DDEBUG
 
@@ -32,11 +32,11 @@ debug: $(source_files)
 	$(CXX) $^ $(CXXFLAGS) $(debug_flags) -I$(include_dir) -o $@
 
 clean:
-	$(RM) $(bin_dir)/*.o $(program_name) debug
+	$(RM) $(bin_dir)/*.o $(program_name) debug tags
 
 uninstall:
 	$(RM) $(install_dir)/$(program_name)
-ctags:
+tags:
 	ctags $(source_dir)/* $(include_dir)/*
 
-.PHONY: all clean install uninstall ctags
+.PHONY: all clean install uninstall tags

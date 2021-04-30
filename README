@@ -12,11 +12,15 @@ Interpreter for C-like language.
 Features
 --------
 *) STL-free code
+*) Strict code style
+*) Fine performance when compiling with -O2 (test described below)
 
 Build
 -----
 Run:
 	make
+Version for debugging:
+	make debug
 
 Installation
 ------------
@@ -26,8 +30,66 @@ Enter the following command to install actor (if necessary as root):
 Usage
 -----
 To run the script with actor enter the following:
-	actor scriptname.act
+	./actor scriptname.c
+
+For contributors
+----------------
+
+Grep FIXME and TODO to get the idea about current tasks. Use ctags for easier
+navigation on the project (make tags).
 
 Documentation
 -------------
-Check doc/ directory.
+Check doc/ directory. (incomplete)
+
+Performance examples:
+---------------------
+
+Testing calculation of 34-th Fibonacci number by recursive function without
+memoization (~1.6*10^10 operations). Source used for tests on C and actor is
+located here: examples/fibonacci_recursion.c . Tests were made just for
+curiosity, and probably lack performance measuring correctness. If you need
+this tool for production, better test it yourself.
+
+Versions of software:
+gcc version 10.3.0 (Gentoo 10.3.0 p1)
+Python 3.8.9
+
+====================================
+
+actor (without -O2):
+$ time ./actor examples/fibonacci_recursion.c
+
+real    0m14.239s
+user    0m14.207s
+sys     0m0.019s
+
+====================================
+
+actor (with -O2):
+$ time ./actor examples/fibonacci_recursion.c
+
+real    0m2.530s
+user    0m2.528s
+sys     0m0.002s
+
+====================================
+
+gcc:
+$ gcc -m32 -O0 examples/fibonacci_recursion.c -o fibonacci_recursion
+$ time ./fibonacci_recursion
+
+real    0m0.157s
+user    0m0.156s
+sys     0m0.001s
+
+====================================
+
+python:
+$ time python examples/fibonacci_recursion.py
+
+real    0m3.954s
+user    0m3.947s
+sys     0m0.007s
+
+====================================

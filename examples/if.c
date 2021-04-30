@@ -13,4 +13,5 @@ int main()
 		;
 	else
 		write counter;
+	return 0;
 }

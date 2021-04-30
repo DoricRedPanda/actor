@@ -1,8 +1,9 @@
-int n, i, fib[256];
+int fib[256];
 
 int
 main()
 {
+	int n, i;
 	n = 30;
 	fib[0] = 0;
 	fib[1] = 1;
@@ -14,6 +15,7 @@ main()
 			fib[i + 1] = fib[i] + fib[i - 1];
 			i = i + 1;
 		}
-		write fib[i];
+		write fib[n];
 	}
+	return 0;
 }

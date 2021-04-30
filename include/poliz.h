@@ -31,13 +31,13 @@ public:
 		tail += count;
 	}
 
-	void slice(size_t count)
-	{
-		if (count >= tail)
-			errx(EXIT_FAILURE, "Stack smashing");
-		tail -= count;
-	}
+	void slice(size_t count) { tail -= count; }
 };
+
+
+/* TODO virtual methods probably cripple performance. Need research
+ * Also, casting may prevent optimizations.
+ */
 
 class PolizItem {
 protected:
@@ -86,7 +86,6 @@ public:
 	void eval(SStack &stack, Poliz *ptrPoliz)
 	{
 		eval(stack);
-		ptrPoliz = ptrPoliz;
 	}
 	~Instruction() {}
 };
@@ -112,11 +111,11 @@ class Variable: public Instruction {
 	int value;
 public:
 	Variable(int v) : value(v) {}
-	void eval(SStack &stack) { stack = stack; }
+	void eval(SStack &stack) {}
 	void* getPointer() { return &value; }
 };
 
-class Array: public Instruction {
+class Array: public PolizItem {
 	size_t size;
 	void *array;
 public:
@@ -126,13 +125,13 @@ public:
 			err(EXIT_FAILURE, "Array allocation failed");
 	}
 	~Array() { free(array); }
-	void eval(SStack &stack) { stack = stack; }
+	void eval(SStack &stack, Poliz *polizPtr) {}
 	void* getPointer() { return array; }
 };
 
 class SubprogramAddress: public Instruction {
 public:
-	void eval(SStack &stack) { stack = stack; }
+	void eval(SStack &stack) {}
 };
 
 class Subprogram: public Instruction {

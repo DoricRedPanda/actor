@@ -1,21 +1,16 @@
 int
 fib(int n)
 {
-	int foo, bar;
-
 	if (n <= 1)
 		return n;
-	foo = fib(n - 1);
-	bar = fib(n - 2);
-	foo = foo + bar;
-	return foo;
+	return fib(n - 1) + fib(n - 2);
 }
 
 int
 main()
 {
 	int n;
-	n = 30;
-	write fib(n);
+	n = 34;
+	n = fib(n);
 	return 0;
 }
