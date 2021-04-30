@@ -17,13 +17,13 @@ int Interpreter::
 interpret()
 {
 	SStack stack(sstack_len);
-	PolizItem **ptr = ptrPoliz->next();
+	Poliz &poliz = *ptrPoliz;
 #ifdef DEBUG
 	fprintf(stderr, "Interpretation:\n");
 #endif
-	while (!ptrPoliz->isEnding()) {
-		(*ptr)->eval(stack, ptrPoliz);
-		ptr = ptrPoliz->next();
+	while (!poliz.isEnding()) {
+		poliz.getCurItem()->eval(stack, ptrPoliz);
+		poliz.step();
 	}
 	return stack.pop();
 }

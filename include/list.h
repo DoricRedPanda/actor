@@ -53,7 +53,10 @@ public:
 	Node<T> *getPos() const { return cur; }
 	Node<T> *getTail() const { return tail; }
 	void begin() { cur = head; }
+	void end() { cur = tail; }
 
+	T& getCurItem() { return cur->item; }
+	void step() { cur = cur->next; }
 	T* next()
 	{
 		if (!cur)

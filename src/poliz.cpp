@@ -6,7 +6,7 @@ void PolizExit::
 eval(SStack &stack, Poliz *ptrPoliz)
 {
 	stack = stack;
-	ptrPoliz->setPos(NULL);
+	ptrPoliz->end();
 #ifdef DEBUG
 	fprintf(stderr, "exit\n");
 #endif
@@ -18,7 +18,6 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	PolizItemNode *pos =
 	    reinterpret_cast<PolizItemNode*>(stack.pop());
 	ptrPoliz->setPos(pos);
-	ptrPoliz->next();
 #ifdef DEBUG
 	fprintf(stderr, "goto %p\n", (void*) pos);
 #endif
@@ -32,7 +31,6 @@ eval(SStack &stack, Poliz *ptrPoliz)
 	intptr_t value = stack.pop();
 	if (!value) {
 		ptrPoliz->setPos(pos);
-		ptrPoliz->next();
 	}
 #ifdef DEBUG
 	fprintf(stderr, "goto %p if not %ld\n", (void*) pos, value);
